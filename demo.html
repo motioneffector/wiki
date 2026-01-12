@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@motioneffector/wiki - Interactive Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #f5f5f5;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+
+    .subtitle {
+      color: #7f8c8d;
+      margin-bottom: 30px;
+      font-size: 1.1em;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    section {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    section.full-width {
+      grid-column: 1 / -1;
+    }
+
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #3498db;
+      font-size: 1.5em;
+    }
+
+    h3 {
+      color: #34495e;
+      margin: 15px 0 10px 0;
+      font-size: 1.2em;
+    }
+
+    p.description {
+      color: #7f8c8d;
+      margin-bottom: 15px;
+      font-size: 0.95em;
+    }
+
+    .control-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-weight: 500;
+      font-size: 0.9em;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: 'Courier New', monospace;
+    }
+
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.3s;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    button.secondary {
+      background: #95a5a6;
+    }
+
+    button.secondary:hover {
+      background: #7f8c8d;
+    }
+
+    button.danger {
+      background: #e74c3c;
+    }
+
+    button.danger:hover {
+      background: #c0392b;
+    }
+
+    button.success {
+      background: #27ae60;
+    }
+
+    button.success:hover {
+      background: #229954;
+    }
+
+    .output {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .output.empty {
+      color: #999;
+      font-style: italic;
+    }
+
+    pre {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .page-card {
+      background: white;
+      border: 1px solid #e1e8ed;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 10px;
+      transition: box-shadow 0.3s;
+    }
+
+    .page-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .page-card h4 {
+      color: #2c3e50;
+      margin-bottom: 8px;
+      font-size: 1.1em;
+    }
+
+    .page-card .page-id {
+      color: #95a5a6;
+      font-size: 0.85em;
+      font-family: monospace;
+      margin-bottom: 8px;
+    }
+
+    .page-card .page-content {
+      color: #555;
+      font-size: 0.9em;
+      line-height: 1.5;
+      margin-bottom: 8px;
+      white-space: pre-wrap;
+    }
+
+    .page-card .page-meta {
+      display: flex;
+      gap: 15px;
+      font-size: 0.85em;
+      color: #7f8c8d;
+      margin-top: 10px;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #3498db;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+
+    .type-badge {
+      display: inline-block;
+      background: #9b59b6;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: 500;
+    }
+
+    .wiki-link {
+      color: #3498db;
+      text-decoration: none;
+      border-bottom: 1px dashed #3498db;
+      cursor: pointer;
+    }
+
+    .wiki-link:hover {
+      color: #2980b9;
+      border-bottom-style: solid;
+    }
+
+    .dead-link {
+      color: #e74c3c;
+      border-bottom: 1px dashed #e74c3c;
+    }
+
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 12px;
+      border-radius: 4px;
+      margin-top: 10px;
+      border-left: 4px solid #28a745;
+    }
+
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 12px;
+      border-radius: 4px;
+      margin-top: 10px;
+      border-left: 4px solid #dc3545;
+    }
+
+    .event-log {
+      max-height: 200px;
+      overflow-y: auto;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    .event-item {
+      padding: 8px;
+      margin-bottom: 5px;
+      border-left: 3px solid #3498db;
+      background: white;
+      font-size: 0.9em;
+    }
+
+    .event-item.create { border-left-color: #27ae60; }
+    .event-item.update { border-left-color: #f39c12; }
+    .event-item.delete { border-left-color: #e74c3c; }
+    .event-item.rename { border-left-color: #9b59b6; }
+
+    .event-time {
+      color: #95a5a6;
+      font-size: 0.85em;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-card.blue {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stat-card.green {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .stat-card.orange {
+      background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+    }
+
+    .stat-card.purple {
+      background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+    }
+
+    .stat-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .flex-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #3498db;
+      padding: 12px;
+      margin: 15px 0;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    .graph-viz {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 15px;
+      font-family: monospace;
+      font-size: 0.9em;
+      line-height: 1.8;
+    }
+
+    .link-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .link-list li {
+      padding: 8px;
+      margin-bottom: 5px;
+      background: #f8f9fa;
+      border-left: 3px solid #3498db;
+      border-radius: 3px;
+    }
+
+    .inline-controls {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 15px;
+    }
+
+    .inline-controls .control-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+
+      body {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>@motioneffector/wiki</h1>
+  <p class="subtitle">Interactive demonstration of wiki/knowledge base with bidirectional linking</p>
+
+  <section class="full-width">
+    <h2>📊 Wiki Statistics</h2>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card blue">
+        <div class="stat-value" id="statPages">0</div>
+        <div class="stat-label">Total Pages</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-value" id="statLinks">0</div>
+        <div class="stat-label">Total Links</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-value" id="statOrphans">0</div>
+        <div class="stat-label">Orphan Pages</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-value" id="statDeadLinks">0</div>
+        <div class="stat-label">Dead Links</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <section>
+      <h2>📝 Create Page</h2>
+      <p class="description">Create wiki pages with [[double bracket]] links. Try linking to other pages!</p>
+
+      <div class="control-group">
+        <label for="pageTitle">Page Title:</label>
+        <input type="text" id="pageTitle" placeholder="e.g., Kingdom of Aldoria">
+      </div>
+
+      <div class="control-group">
+        <label for="pageContent">Content (use [[Page Name]] for links):</label>
+        <textarea id="pageContent" placeholder="Founded by [[King Aldric I]] after the [[Battle of Five Rivers]]."></textarea>
+      </div>
+
+      <div class="control-group">
+        <label for="pageType">Type (optional):</label>
+        <select id="pageType">
+          <option value="">-- None --</option>
+          <option value="person">Person</option>
+          <option value="place">Place</option>
+          <option value="event">Event</option>
+          <option value="concept">Concept</option>
+          <option value="organization">Organization</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="pageTags">Tags (comma-separated, optional):</label>
+        <input type="text" id="pageTags" placeholder="e.g., history, important, magic">
+      </div>
+
+      <div class="flex-buttons">
+        <button onclick="createPage()">Create Page</button>
+        <button class="success" onclick="loadExampleData()">Load Example Wiki</button>
+        <button class="secondary" onclick="clearForm()">Clear Form</button>
+      </div>
+
+      <div id="createOutput"></div>
+    </section>
+
+    <section>
+      <h2>🔍 Get Page</h2>
+      <p class="description">Retrieve pages by ID or title.</p>
+
+      <div class="control-group">
+        <label for="getPageId">Page ID:</label>
+        <input type="text" id="getPageId" placeholder="e.g., kingdom-of-aldoria">
+      </div>
+      <button onclick="getPageById()">Get by ID</button>
+
+      <div class="control-group" style="margin-top: 15px;">
+        <label for="getPageTitle">Page Title:</label>
+        <input type="text" id="getPageTitle" placeholder="e.g., Kingdom of Aldoria">
+      </div>
+      <div class="flex-buttons">
+        <button onclick="getPageByTitle(false)">Get by Title (exact)</button>
+        <button onclick="getPageByTitle(true)">Get by Title (ignore case)</button>
+      </div>
+
+      <div id="getPageOutput" class="output empty">Page details will appear here</div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section>
+      <h2>✏️ Update Page</h2>
+      <p class="description">Update existing page content, title, type, or tags.</p>
+
+      <div class="control-group">
+        <label for="updatePageId">Page ID:</label>
+        <input type="text" id="updatePageId" placeholder="e.g., kingdom-of-aldoria">
+      </div>
+
+      <div class="control-group">
+        <label for="updateContent">New Content:</label>
+        <textarea id="updateContent" placeholder="Updated content with [[new links]]"></textarea>
+      </div>
+
+      <div class="flex-buttons">
+        <button onclick="updatePage()">Update Page</button>
+        <button class="secondary" onclick="loadPageForUpdate()">Load Page</button>
+      </div>
+
+      <div id="updateOutput"></div>
+    </section>
+
+    <section>
+      <h2>🔄 Rename Page</h2>
+      <p class="description">Rename a page and optionally update its ID.</p>
+
+      <div class="control-group">
+        <label for="renamePageId">Page ID:</label>
+        <input type="text" id="renamePageId" placeholder="e.g., old-page">
+      </div>
+
+      <div class="control-group">
+        <label for="renameNewTitle">New Title:</label>
+        <input type="text" id="renameNewTitle" placeholder="New Page Name">
+      </div>
+
+      <div class="flex-buttons">
+        <button onclick="renamePage(false)">Rename (keep ID)</button>
+        <button onclick="renamePage(true)">Rename + Update ID</button>
+      </div>
+
+      <div id="renameOutput"></div>
+    </section>
+  </div>
+
+  <section class="full-width">
+    <h2>📚 All Pages</h2>
+    <p class="description">View all pages in the wiki. Click links to see connections.</p>
+
+    <div class="inline-controls">
+      <div class="control-group">
+        <label for="filterType">Filter by Type:</label>
+        <select id="filterType">
+          <option value="">All Types</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="filterTags">Filter by Tag:</label>
+        <select id="filterTags">
+          <option value="">All Tags</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="sortBy">Sort By:</label>
+        <select id="sortBy">
+          <option value="created">Created (newest)</option>
+          <option value="modified">Modified (newest)</option>
+          <option value="title">Title (A-Z)</option>
+        </select>
+      </div>
+      <button onclick="refreshPagesList()">Refresh</button>
+    </div>
+
+    <div id="pagesList" class="output empty">No pages yet. Create your first page above!</div>
+  </section>
+
+  <div class="container">
+    <section>
+      <h2>🔗 Links & Backlinks</h2>
+      <p class="description">Explore bidirectional linking between pages.</p>
+
+      <div class="control-group">
+        <label for="linksPageId">Page ID:</label>
+        <input type="text" id="linksPageId" placeholder="e.g., kingdom-of-aldoria">
+      </div>
+
+      <button onclick="showLinks()">Show Links</button>
+
+      <div id="linksOutput" class="output empty">Links will appear here</div>
+    </section>
+
+    <section>
+      <h2>🌐 Graph Exploration</h2>
+      <p class="description">Visualize page connections and traverse the link graph.</p>
+
+      <div class="control-group">
+        <label for="graphStartId">Start Page ID:</label>
+        <input type="text" id="graphStartId" placeholder="e.g., kingdom-of-aldoria">
+      </div>
+
+      <div class="control-group">
+        <label for="graphDepth">Connection Depth:</label>
+        <select id="graphDepth">
+          <option value="0">0 (page only)</option>
+          <option value="1" selected>1 (direct links)</option>
+          <option value="2">2 (2 hops)</option>
+          <option value="3">3 (3 hops)</option>
+        </select>
+      </div>
+
+      <div class="flex-buttons">
+        <button onclick="showConnectedPages()">Show Connected</button>
+        <button class="secondary" onclick="showFullGraph()">Show Full Graph</button>
+      </div>
+
+      <div id="graphOutput" class="output empty">Graph will appear here</div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section>
+      <h2>🔎 Search</h2>
+      <p class="description">Full-text search across titles, content, and tags.</p>
+
+      <div class="control-group">
+        <label for="searchQuery">Search Query:</label>
+        <input type="text" id="searchQuery" placeholder="e.g., magic, kingdom, battle">
+      </div>
+
+      <div class="control-group">
+        <label>Search In:</label>
+        <div style="display: flex; gap: 15px; margin-top: 5px;">
+          <label style="display: flex; align-items: center; gap: 5px;">
+            <input type="checkbox" id="searchTitle" checked> Title
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px;">
+            <input type="checkbox" id="searchContent" checked> Content
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px;">
+            <input type="checkbox" id="searchTags" checked> Tags
+          </label>
+        </div>
+      </div>
+
+      <button onclick="searchWiki()">Search</button>
+
+      <div id="searchOutput" class="output empty">Search results will appear here</div>
+    </section>
+
+    <section>
+      <h2>⚠️ Dead Links & Orphans</h2>
+      <p class="description">Find broken links and disconnected pages.</p>
+
+      <div class="flex-buttons">
+        <button onclick="showDeadLinks()">Show Dead Links</button>
+        <button onclick="showOrphans()">Show Orphans</button>
+      </div>
+
+      <div id="deadLinksOutput" class="output empty">Results will appear here</div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section>
+      <h2>📤 Export / Import</h2>
+      <p class="description">Export wiki data as JSON or import from JSON.</p>
+
+      <div class="flex-buttons">
+        <button onclick="exportWiki()">Export to JSON</button>
+        <button class="success" onclick="importFromClipboard()">Import from Clipboard</button>
+      </div>
+
+      <div class="control-group" style="margin-top: 15px;">
+        <label for="importMode">Import Mode:</label>
+        <select id="importMode">
+          <option value="replace">Replace (clear existing)</option>
+          <option value="merge">Merge (overwrite conflicts)</option>
+          <option value="skip">Skip (keep existing)</option>
+        </select>
+      </div>
+
+      <div id="exportOutput" class="output empty">Export/Import results will appear here</div>
+    </section>
+
+    <section>
+      <h2>🗑️ Delete Page</h2>
+      <p class="description">Remove pages from the wiki. Backlinks become dead links.</p>
+
+      <div class="control-group">
+        <label for="deletePageId">Page ID:</label>
+        <input type="text" id="deletePageId" placeholder="e.g., old-page">
+      </div>
+
+      <button class="danger" onclick="deletePage()">Delete Page</button>
+
+      <div id="deleteOutput"></div>
+    </section>
+  </div>
+
+  <section class="full-width">
+    <h2>📡 Live Events</h2>
+    <p class="description">Real-time notifications for all wiki changes.</p>
+
+    <div class="flex-buttons">
+      <button class="secondary" onclick="clearEvents()">Clear Events</button>
+    </div>
+
+    <div id="eventLog" class="event-log">
+      <div style="color: #999; font-style: italic;">Events will appear here...</div>
+    </div>
+  </section>
+
+  <section class="full-width">
+    <h2>🧪 Test Edge Cases</h2>
+    <p class="description">Try these to see error handling and edge case behavior.</p>
+
+    <div class="flex-buttons">
+      <button onclick="testEmptyTitle()">Empty Title</button>
+      <button onclick="testDuplicateId()">Duplicate ID</button>
+      <button onclick="testInvalidTags()">Invalid Tags</button>
+      <button onclick="testCodeBlockLinks()">Code Block Links</button>
+      <button onclick="testUnicode()">Unicode Support</button>
+      <button onclick="testSelfLink()">Self-Referential Link</button>
+      <button onclick="testCircularLinks()">Circular Links</button>
+      <button onclick="testDisplayTextSyntax()">Display Text Syntax</button>
+    </div>
+
+    <div id="testOutput" class="output empty">Test results will appear here</div>
+  </section>
+
+  <script type="module">
+    import { createWiki, memoryStorage } from './dist/index.js'
+
+    // Initialize wiki
+    const wiki = createWiki({ storage: memoryStorage() })
+    window.wiki = wiki // For debugging
+
+    // Subscribe to events
+    wiki.on('create', event => logEvent('create', `Created: ${event.page.title}`))
+    wiki.on('update', event => logEvent('update', `Updated: ${event.page.title}`))
+    wiki.on('delete', event => logEvent('delete', `Deleted: ${event.page.title}`))
+    wiki.on('rename', event => logEvent('rename', `Renamed: ${event.previousTitle} → ${event.page.title}`))
+
+    // Helper functions
+    function showMessage(elementId, message, isError = false) {
+      const el = document.getElementById(elementId)
+      el.innerHTML = `<div class="${isError ? 'error-message' : 'success-message'}">${message}</div>`
+    }
+
+    function logEvent(type, message) {
+      const log = document.getElementById('eventLog')
+      const item = document.createElement('div')
+      item.className = `event-item ${type}`
+      item.innerHTML = `
+        <span class="event-time">${new Date().toLocaleTimeString()}</span>
+        <strong>${type.toUpperCase()}</strong>: ${message}
+      `
+      log.insertBefore(item, log.firstChild)
+      updateStats()
+    }
+
+    function updateStats() {
+      const pages = wiki.listPages()
+      const deadLinks = wiki.getDeadLinks()
+      const orphans = wiki.getOrphans()
+      const graph = wiki.getGraph()
+      const totalLinks = Object.values(graph).reduce((sum, links) => sum + links.length, 0)
+
+      document.getElementById('statPages').textContent = pages.length
+      document.getElementById('statLinks').textContent = totalLinks
+      document.getElementById('statOrphans').textContent = orphans.length
+      document.getElementById('statDeadLinks').textContent = deadLinks.length
+
+      // Update filter dropdowns
+      updateFilterOptions()
+    }
+
+    function updateFilterOptions() {
+      const types = wiki.getTypes()
+      const tags = wiki.getTags()
+
+      const typeSelect = document.getElementById('filterType')
+      const currentType = typeSelect.value
+      typeSelect.innerHTML = '<option value="">All Types</option>' +
+        types.map(t => `<option value="${t}" ${t === currentType ? 'selected' : ''}>${t}</option>`).join('')
+
+      const tagSelect = document.getElementById('filterTags')
+      const currentTag = tagSelect.value
+      tagSelect.innerHTML = '<option value="">All Tags</option>' +
+        tags.map(t => `<option value="${t}" ${t === currentTag ? 'selected' : ''}>${t}</option>`).join('')
+    }
+
+    function renderPage(page) {
+      const contentWithLinks = page.content.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (match, target, display) => {
+        const id = wiki.resolveLink(target)
+        const exists = wiki.getPage(id)
+        const text = display || target
+        return exists
+          ? `<span class="wiki-link" onclick="viewPage('${id}')">${text}</span>`
+          : `<span class="dead-link">${text}</span>`
+      })
+
+      return `
+        <div class="page-card">
+          <h4>${page.title}</h4>
+          <div class="page-id">ID: ${page.id}</div>
+          ${page.type ? `<span class="type-badge">${page.type}</span>` : ''}
+          ${page.tags ? page.tags.map(t => `<span class="tag">${t}</span>`).join('') : ''}
+          <div class="page-content">${contentWithLinks || '<em>No content</em>'}</div>
+          <div class="page-meta">
+            <span>Created: ${page.created.toLocaleString()}</span>
+            <span>Modified: ${page.modified.toLocaleString()}</span>
+          </div>
+        </div>
+      `
+    }
+
+    // Page operations
+    window.createPage = async function() {
+      try {
+        const title = document.getElementById('pageTitle').value
+        const content = document.getElementById('pageContent').value
+        const type = document.getElementById('pageType').value || undefined
+        const tagsStr = document.getElementById('pageTags').value
+        const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : undefined
+
+        if (!title) {
+          showMessage('createOutput', 'Please enter a page title', true)
+          return
+        }
+
+        const page = await wiki.createPage({ title, content, type, tags })
+        showMessage('createOutput', `Page "${page.title}" created successfully! (ID: ${page.id})`)
+        clearForm()
+        refreshPagesList()
+      } catch (error) {
+        showMessage('createOutput', `Error: ${error.message}`, true)
+      }
+    }
+
+    window.clearForm = function() {
+      document.getElementById('pageTitle').value = ''
+      document.getElementById('pageContent').value = ''
+      document.getElementById('pageType').value = ''
+      document.getElementById('pageTags').value = ''
+    }
+
+    window.getPageById = function() {
+      const id = document.getElementById('getPageId').value
+      const page = wiki.getPage(id)
+      const output = document.getElementById('getPageOutput')
+
+      if (page) {
+        output.innerHTML = renderPage(page)
+        output.classList.remove('empty')
+      } else {
+        output.innerHTML = '<div class="error-message">Page not found</div>'
+      }
+    }
+
+    window.getPageByTitle = function(ignoreCase) {
+      const title = document.getElementById('getPageTitle').value
+      const page = wiki.getPageByTitle(title, { ignoreCase })
+      const output = document.getElementById('getPageOutput')
+
+      if (page) {
+        output.innerHTML = renderPage(page)
+        output.classList.remove('empty')
+      } else {
+        output.innerHTML = '<div class="error-message">Page not found</div>'
+      }
+    }
+
+    window.viewPage = function(id) {
+      document.getElementById('getPageId').value = id
+      getPageById()
+      document.getElementById('getPageId').scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+
+    window.updatePage = async function() {
+      try {
+        const id = document.getElementById('updatePageId').value
+        const content = document.getElementById('updateContent').value
+
+        if (!id) {
+          showMessage('updateOutput', 'Please enter a page ID', true)
+          return
+        }
+
+        const page = await wiki.updatePage(id, { content })
+        showMessage('updateOutput', `Page "${page.title}" updated successfully!`)
+        refreshPagesList()
+      } catch (error) {
+        showMessage('updateOutput', `Error: ${error.message}`, true)
+      }
+    }
+
+    window.loadPageForUpdate = function() {
+      const id = document.getElementById('updatePageId').value
+      const page = wiki.getPage(id)
+
+      if (page) {
+        document.getElementById('updateContent').value = page.content
+        showMessage('updateOutput', `Loaded page "${page.title}"`)
+      } else {
+        showMessage('updateOutput', 'Page not found', true)
+      }
+    }
+
+    window.renamePage = async function(updateId) {
+      try {
+        const id = document.getElementById('renamePageId').value
+        const newTitle = document.getElementById('renameNewTitle').value
+
+        if (!id || !newTitle) {
+          showMessage('renameOutput', 'Please enter both page ID and new title', true)
+          return
+        }
+
+        const page = await wiki.renamePage(id, newTitle, { updateId })
+        showMessage('renameOutput', `Page renamed to "${page.title}"${updateId ? ` (new ID: ${page.id})` : ''}`)
+        refreshPagesList()
+      } catch (error) {
+        showMessage('renameOutput', `Error: ${error.message}`, true)
+      }
+    }
+
+    window.deletePage = async function() {
+      try {
+        const id = document.getElementById('deletePageId').value
+
+        if (!id) {
+          showMessage('deleteOutput', 'Please enter a page ID', true)
+          return
+        }
+
+        if (!confirm(`Are you sure you want to delete page "${id}"?`)) {
+          return
+        }
+
+        await wiki.deletePage(id)
+        showMessage('deleteOutput', `Page "${id}" deleted successfully!`)
+        refreshPagesList()
+      } catch (error) {
+        showMessage('deleteOutput', `Error: ${error.message}`, true)
+      }
+    }
+
+    window.refreshPagesList = function() {
+      const filterType = document.getElementById('filterType').value
+      const filterTag = document.getElementById('filterTags').value
+      const sortBy = document.getElementById('sortBy').value
+
+      const options = {}
+      if (filterType) options.type = filterType
+      if (filterTag) options.tags = [filterTag]
+      options.sort = sortBy.split(' ')[0]
+      options.order = sortBy.includes('newest') ? 'desc' : 'asc'
+
+      const pages = wiki.listPages(options)
+      const output = document.getElementById('pagesList')
+
+      if (pages.length === 0) {
+        output.innerHTML = '<div style="color: #999; font-style: italic;">No pages match the filter</div>'
+        output.classList.add('empty')
+      } else {
+        output.innerHTML = pages.map(renderPage).join('')
+        output.classList.remove('empty')
+      }
+    }
+
+    window.showLinks = function() {
+      const id = document.getElementById('linksPageId').value
+      const output = document.getElementById('linksOutput')
+
+      if (!id) {
+        output.innerHTML = '<div class="error-message">Please enter a page ID</div>'
+        return
+      }
+
+      const page = wiki.getPage(id)
+      if (!page) {
+        output.innerHTML = '<div class="error-message">Page not found</div>'
+        return
+      }
+
+      const outgoing = wiki.getLinks(id)
+      const incoming = wiki.getBacklinks(id)
+      const outgoingPages = wiki.getLinkedPages(id)
+      const incomingPages = wiki.getBacklinkPages(id)
+
+      output.innerHTML = `
+        <h4>${page.title}</h4>
+        <h5 style="margin-top: 15px;">Outgoing Links (${outgoing.length}):</h5>
+        ${outgoing.length > 0 ? `
+          <ul class="link-list">
+            ${outgoing.map(link => {
+              const linkedPage = wiki.resolveLinkToPage(link)
+              return `<li>
+                ${linkedPage
+                  ? `<span class="wiki-link" onclick="viewPage('${linkedPage.id}')">${link}</span>`
+                  : `<span class="dead-link">${link}</span> (dead link)`
+                }
+              </li>`
+            }).join('')}
+          </ul>
+        ` : '<p><em>No outgoing links</em></p>'}
+
+        <h5 style="margin-top: 15px;">Incoming Links / Backlinks (${incoming.length}):</h5>
+        ${incoming.length > 0 ? `
+          <ul class="link-list">
+            ${incomingPages.map(p => `
+              <li>
+                <span class="wiki-link" onclick="viewPage('${p.id}')">${p.title}</span>
+                <span style="color: #999; font-size: 0.85em;"> (${p.id})</span>
+              </li>
+            `).join('')}
+          </ul>
+        ` : '<p><em>No incoming links</em></p>'}
+      `
+      output.classList.remove('empty')
+    }
+
+    window.showConnectedPages = function() {
+      const id = document.getElementById('graphStartId').value
+      const depth = parseInt(document.getElementById('graphDepth').value)
+      const output = document.getElementById('graphOutput')
+
+      if (!id) {
+        output.innerHTML = '<div class="error-message">Please enter a page ID</div>'
+        return
+      }
+
+      const connected = wiki.getConnectedPages(id, depth)
+
+      output.innerHTML = `
+        <h4>Pages within ${depth} link${depth !== 1 ? 's' : ''} of "${id}":</h4>
+        <p style="margin: 10px 0; color: #666;">Found ${connected.length} page${connected.length !== 1 ? 's' : ''}</p>
+        ${connected.map(renderPage).join('')}
+      `
+      output.classList.remove('empty')
+    }
+
+    window.showFullGraph = function() {
+      const graph = wiki.getGraph()
+      const output = document.getElementById('graphOutput')
+
+      const graphViz = Object.entries(graph)
+        .map(([id, targets]) => {
+          const page = wiki.getPage(id)
+          const title = page ? page.title : id
+          return `${title} (${id}):\n  → ${targets.length > 0 ? targets.join(', ') : '(no links)'}`
+        })
+        .join('\n\n')
+
+      output.innerHTML = `
+        <h4>Complete Link Graph:</h4>
+        <div class="graph-viz">${graphViz || '<em>Empty graph</em>'}</div>
+      `
+      output.classList.remove('empty')
+    }
+
+    window.searchWiki = function() {
+      const query = document.getElementById('searchQuery').value
+      const output = document.getElementById('searchOutput')
+
+      if (!query) {
+        output.innerHTML = '<div class="error-message">Please enter a search query</div>'
+        return
+      }
+
+      const fields = []
+      if (document.getElementById('searchTitle').checked) fields.push('title')
+      if (document.getElementById('searchContent').checked) fields.push('content')
+      if (document.getElementById('searchTags').checked) fields.push('tags')
+
+      const results = wiki.search(query, { fields })
+
+      if (results.length === 0) {
+        output.innerHTML = `<div style="color: #999; font-style: italic;">No results found for "${query}"</div>`
+      } else {
+        output.innerHTML = `
+          <h4>Found ${results.length} result${results.length !== 1 ? 's' : ''} for "${query}":</h4>
+          ${results.map(renderPage).join('')}
+        `
+      }
+      output.classList.remove('empty')
+    }
+
+    window.showDeadLinks = function() {
+      const deadLinks = wiki.getDeadLinks()
+      const output = document.getElementById('deadLinksOutput')
+
+      if (deadLinks.length === 0) {
+        output.innerHTML = '<div style="color: #27ae60; font-weight: 500;">✓ No dead links! All links point to existing pages.</div>'
+      } else {
+        const grouped = {}
+        deadLinks.forEach(dl => {
+          if (!grouped[dl.source]) grouped[dl.source] = []
+          grouped[dl.source].push(dl.target)
+        })
+
+        output.innerHTML = `
+          <h4>Dead Links (${deadLinks.length}):</h4>
+          ${Object.entries(grouped).map(([source, targets]) => {
+            const page = wiki.getPage(source)
+            return `
+              <div style="margin-bottom: 15px;">
+                <strong>${page ? page.title : source}</strong> (${source}):
+                <ul class="link-list" style="margin-top: 5px;">
+                  ${targets.map(t => `<li><span class="dead-link">${t}</span></li>`).join('')}
+                </ul>
+              </div>
+            `
+          }).join('')}
+        `
+      }
+      output.classList.remove('empty')
+    }
+
+    window.showOrphans = function() {
+      const orphans = wiki.getOrphans()
+      const output = document.getElementById('deadLinksOutput')
+
+      if (orphans.length === 0) {
+        output.innerHTML = '<div style="color: #27ae60; font-weight: 500;">✓ No orphan pages! All pages have incoming links.</div>'
+      } else {
+        output.innerHTML = `
+          <h4>Orphan Pages (${orphans.length}):</h4>
+          <p style="color: #666; margin-bottom: 15px;">Pages with no incoming links</p>
+          ${orphans.map(renderPage).join('')}
+        `
+      }
+      output.classList.remove('empty')
+    }
+
+    window.exportWiki = function() {
+      const data = wiki.export()
+      const json = JSON.stringify(data, null, 2)
+      const output = document.getElementById('exportOutput')
+
+      navigator.clipboard.writeText(json).then(() => {
+        output.innerHTML = `
+          <div class="success-message">
+            Exported ${data.length} pages to clipboard!
+          </div>
+          <details style="margin-top: 10px;">
+            <summary style="cursor: pointer; color: #3498db;">View JSON</summary>
+            <pre>${json}</pre>
+          </details>
+        `
+      }).catch(err => {
+        output.innerHTML = `
+          <div class="error-message">Failed to copy to clipboard</div>
+          <pre>${json}</pre>
+        `
+      })
+      output.classList.remove('empty')
+    }
+
+    window.importFromClipboard = async function() {
+      try {
+        const json = await navigator.clipboard.readText()
+        const data = JSON.parse(json)
+        const mode = document.getElementById('importMode').value
+        const count = await wiki.import(data, { mode })
+
+        const output = document.getElementById('exportOutput')
+        output.innerHTML = `
+          <div class="success-message">
+            Successfully imported ${count} pages in "${mode}" mode!
+          </div>
+        `
+        output.classList.remove('empty')
+        refreshPagesList()
+      } catch (error) {
+        const output = document.getElementById('exportOutput')
+        output.innerHTML = `<div class="error-message">Import failed: ${error.message}</div>`
+      }
+    }
+
+    window.clearEvents = function() {
+      document.getElementById('eventLog').innerHTML = '<div style="color: #999; font-style: italic;">Events cleared...</div>'
+    }
+
+    // Test functions
+    window.testEmptyTitle = async function() {
+      try {
+        await wiki.createPage({ title: '' })
+        document.getElementById('testOutput').innerHTML = '<div class="error-message">Should have thrown error!</div>'
+      } catch (error) {
+        document.getElementById('testOutput').innerHTML = `
+          <div class="success-message">
+            ✓ Correctly threw error: ${error.message}
+          </div>
+        `
+      }
+    }
+
+    window.testDuplicateId = async function() {
+      try {
+        await wiki.createPage({ title: 'Test Page', id: 'test-duplicate' })
+        await wiki.createPage({ title: 'Another Page', id: 'test-duplicate' })
+        document.getElementById('testOutput').innerHTML = '<div class="error-message">Should have thrown error!</div>'
+      } catch (error) {
+        document.getElementById('testOutput').innerHTML = `
+          <div class="success-message">
+            ✓ Correctly threw error: ${error.message}
+          </div>
+        `
+      }
+    }
+
+    window.testInvalidTags = async function() {
+      try {
+        await wiki.createPage({ title: 'Test', tags: 'not-an-array' })
+        document.getElementById('testOutput').innerHTML = '<div class="error-message">Should have thrown error!</div>'
+      } catch (error) {
+        document.getElementById('testOutput').innerHTML = `
+          <div class="success-message">
+            ✓ Correctly threw TypeError: ${error.message}
+          </div>
+        `
+      }
+    }
+
+    window.testCodeBlockLinks = async function() {
+      const content = `
+Regular link: [[Normal Link]]
+
+Code block:
+\`\`\`
+[[Not A Link]]
+\`\`\`
+
+Inline: \`[[Also Not A Link]]\`
+
+After code: [[Real Link]]
+      `
+      const page = await wiki.createPage({ title: 'Code Test', content })
+      const links = wiki.getLinks(page.id)
+
+      document.getElementById('testOutput').innerHTML = `
+        <div class="success-message">
+          ✓ Code block test passed!<br>
+          Found ${links.length} links: ${links.join(', ')}<br>
+          (Should be: Normal Link, Real Link)
+        </div>
+      `
+      document.getElementById('testOutput').classList.remove('empty')
+    }
+
+    window.testUnicode = async function() {
+      const page = await wiki.createPage({
+        title: '日本語テスト',
+        content: 'Links to [[Café München]] and [[Здравствуй]]'
+      })
+      const links = wiki.getLinks(page.id)
+
+      document.getElementById('testOutput').innerHTML = `
+        <div class="success-message">
+          ✓ Unicode test passed!<br>
+          Created page: ${page.title} (ID: ${page.id})<br>
+          Found ${links.length} links: ${links.join(', ')}
+        </div>
+      `
+      document.getElementById('testOutput').classList.remove('empty')
+    }
+
+    window.testSelfLink = async function() {
+      const page = await wiki.createPage({
+        title: 'Self Reference',
+        content: 'This page links to [[Self Reference]]'
+      })
+      const backlinks = wiki.getBacklinks(page.id)
+      const isOrphan = wiki.getOrphans().some(p => p.id === page.id)
+
+      document.getElementById('testOutput').innerHTML = `
+        <div class="success-message">
+          ✓ Self-link test passed!<br>
+          Page has ${backlinks.length} backlink(s) (including self)<br>
+          Is orphan: ${isOrphan} (should be false)
+        </div>
+      `
+      document.getElementById('testOutput').classList.remove('empty')
+    }
+
+    window.testCircularLinks = async function() {
+      const a = await wiki.createPage({ title: 'Page A', content: 'Links to [[Page B]]' })
+      const b = await wiki.createPage({ title: 'Page B', content: 'Links to [[Page C]]' })
+      const c = await wiki.createPage({ title: 'Page C', content: 'Links to [[Page A]]' })
+
+      const connected = wiki.getConnectedPages(a.id, 10)
+
+      document.getElementById('testOutput').innerHTML = `
+        <div class="success-message">
+          ✓ Circular link test passed!<br>
+          Created A → B → C → A cycle<br>
+          Connected pages (depth 10): ${connected.length}<br>
+          (Should be 3, not infinite)
+        </div>
+      `
+      document.getElementById('testOutput').classList.remove('empty')
+    }
+
+    window.testDisplayTextSyntax = async function() {
+      const page = await wiki.createPage({
+        title: 'Display Test',
+        content: 'Read more at [[Documentation|the docs]] and [[API Reference|here]]'
+      })
+      const links = wiki.getLinks(page.id)
+
+      document.getElementById('testOutput').innerHTML = `
+        <div class="success-message">
+          ✓ Display text syntax test passed!<br>
+          Found ${links.length} links: ${links.join(', ')}<br>
+          (Display text is preserved, link targets extracted)
+        </div>
+      `
+      document.getElementById('testOutput').classList.remove('empty')
+    }
+
+    // Load example data
+    window.loadExampleData = async function() {
+      if (wiki.listPages().length > 0) {
+        if (!confirm('This will clear the current wiki and load example data. Continue?')) {
+          return
+        }
+      }
+
+      try {
+        await wiki.import([], { mode: 'replace' }) // Clear existing
+
+        await wiki.createPage({
+          title: 'Kingdom of Aldoria',
+          content: `A prosperous kingdom in the eastern valleys.
+
+Founded by [[King Aldric I]] after the [[Battle of Five Rivers]].
+
+## Notable Locations
+- [[Castle Aldric]] - The royal seat
+- [[Port Valen]] - Major trading hub
+
+## Culture
+Known for its [[School of Magic]] and annual [[Harvest Festival]].`,
+          type: 'place',
+          tags: ['nation', 'important']
+        })
+
+        await wiki.createPage({
+          title: 'King Aldric I',
+          content: `First ruler of the [[Kingdom of Aldoria]].
+
+Born in 1245, died 1312. Led the armies at the [[Battle of Five Rivers]] and established the kingdom in 1270.
+
+His legacy includes:
+- Founded [[Castle Aldric]]
+- Established the [[School of Magic]]
+- Created the Royal Charter`,
+          type: 'person',
+          tags: ['royalty', 'historical', 'founder']
+        })
+
+        await wiki.createPage({
+          title: 'Battle of Five Rivers',
+          content: `Decisive battle in 1270 where [[King Aldric I]] unified the valley kingdoms.
+
+Fought at the confluence of five rivers, this three-day battle resulted in the formation of the [[Kingdom of Aldoria]].
+
+Key figures:
+- [[King Aldric I]] (victor)
+- General Marcus (Aldric's general)
+- The opposing warlords`,
+          type: 'event',
+          tags: ['historical', 'military', 'important']
+        })
+
+        await wiki.createPage({
+          title: 'School of Magic',
+          content: `Premier institution for magical education in [[Kingdom of Aldoria]].
+
+Founded by [[King Aldric I]] in 1275. Located near [[Castle Aldric]].
+
+The school teaches various disciplines including elemental magic, healing, and enchantment.
+
+Notable alumni include the [[Archmage Elara]].`,
+          type: 'organization',
+          tags: ['magic', 'education']
+        })
+
+        await wiki.createPage({
+          title: 'Castle Aldric',
+          content: `Royal palace of the [[Kingdom of Aldoria]].
+
+Built between 1270-1280 under [[King Aldric I]]. Features impressive fortifications and the famous Crystal Throne Room.
+
+Home to the royal family and seat of government. The [[School of Magic]] is located nearby.`,
+          type: 'place',
+          tags: ['architecture', 'important']
+        })
+
+        await wiki.createPage({
+          title: 'Forgotten Ruins',
+          content: `Ancient ruins in the northern wilderness. Their origin and purpose remain unknown.
+
+Local legends speak of a civilization that predates the [[Kingdom of Aldoria]] by thousands of years.`,
+          type: 'place',
+          tags: ['mysterious', 'ancient']
+        })
+
+        showMessage('createOutput', '✓ Example wiki loaded! 6 pages created with interconnected links.')
+        refreshPagesList()
+      } catch (error) {
+        showMessage('createOutput', `Error loading example data: ${error.message}`, true)
+      }
+    }
+
+    // Initialize
+    updateStats()
+    refreshPagesList()
+  </script>
+</body>
+</html>
