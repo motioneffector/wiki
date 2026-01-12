@@ -1,9 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { Wiki, WikiPage } from '../types'
-
-function createWiki(): Wiki {
-  throw new Error('Not implemented')
-}
+import { createWiki } from './wiki'
 
 describe('Import/Export', () => {
   let wiki: Wiki

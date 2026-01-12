@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import type { WikiStorage, WikiPage } from '../types'
-
-function memoryStorage(): WikiStorage {
-  throw new Error('Not implemented')
-}
+import type { WikiPage } from '../types'
+import { memoryStorage } from './memory'
 
 describe('Memory Storage', () => {
   describe('memoryStorage()', () => {

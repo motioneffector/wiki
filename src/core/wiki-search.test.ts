@@ -1,9 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { Wiki } from '../types'
-
-function createWiki(): Wiki {
-  throw new Error('Not implemented')
-}
+import { createWiki } from './wiki'
 
 describe('Page Listing', () => {
   let wiki: Wiki
@@ -86,7 +83,7 @@ describe('Page Listing', () => {
       await wiki.createPage({ title: 'Zebra' })
       await wiki.createPage({ title: 'Apple' })
       await wiki.createPage({ title: 'Middle' })
-      const pages = wiki.listPages({ sort: 'title' })
+      const pages = wiki.listPages({ sort: 'title', order: 'asc' })
       expect(pages[0]?.title).toBe('Apple')
       expect(pages[2]?.title).toBe('Zebra')
     })

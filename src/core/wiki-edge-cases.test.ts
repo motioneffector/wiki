@@ -1,9 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { Wiki } from '../types'
-
-function createWiki(): Wiki {
-  throw new Error('Not implemented')
-}
+import { createWiki } from './wiki'
 
 describe('Edge Cases & Error Handling', () => {
   let wiki: Wiki
@@ -78,7 +75,7 @@ describe('Edge Cases & Error Handling', () => {
     it('handles content with 1MB+ text', async () => {
       const largeContent = 'A'.repeat(1024 * 1024)
       const page = await wiki.createPage({ title: 'Large', content: largeContent })
-      expect(page.content.length).toBeGreaterThan(1024 * 1024)
+      expect(page.content.length).toBeGreaterThanOrEqual(1024 * 1024)
     })
 
     it('handles wiki with 10,000+ pages (performance test)', async () => {

@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { Wiki, WikiPage, WikiStorage } from '../types'
-
-// Placeholder function - to be implemented
-function createWiki(options?: any): Wiki {
-  throw new Error('Not implemented')
-}
+import { createWiki } from './wiki'
 
 describe('Wiki Creation', () => {
   describe('createWiki(options?)', () => {

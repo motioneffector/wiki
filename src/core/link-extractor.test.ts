@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { extractLinks, extractLinksWithPattern } from './link-extractor'
 
 describe('Link Extraction', () => {
   describe('Basic Extraction', () => {
@@ -206,12 +207,3 @@ describe('Link Extraction', () => {
     })
   })
 })
-
-// Placeholder functions - to be implemented
-function extractLinks(content: string): string[] {
-  throw new Error('Not implemented')
-}
-
-function extractLinksWithPattern(content: string, pattern: RegExp): string[] {
-  throw new Error('Not implemented')
-}
