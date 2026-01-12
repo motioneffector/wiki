@@ -2,7 +2,7 @@
   "name": "@motioneffector/wiki",
   "version": "0.1.0",
   "description": "A TypeScript library for creating and managing interconnected knowledge bases with bidirectional linking",
-  "author": "MotionEffector",
+  "author": "motioneffector",
   "license": "MIT",
   "repository": {
     "type": "git",

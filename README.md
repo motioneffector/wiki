@@ -557,4 +557,4 @@ Works in all modern browsers supporting ES2022+. For older browsers, transpile a
 
 ## License
 
-MIT © [MotionEffector](https://github.com/motioneffector)
+MIT © [motioneffector](https://github.com/motioneffector)
