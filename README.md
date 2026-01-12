@@ -6,6 +6,10 @@ A TypeScript library for creating and managing interconnected knowledge bases wi
 [![license](https://img.shields.io/npm/l/@motioneffector/wiki.svg)](https://github.com/motioneffector/wiki/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
+## Demo
+
+Try the [interactive demo](https://motioneffector.github.io/wiki/) to see the library in action.
+
 ## Installation
 
 ```bash
@@ -538,10 +542,6 @@ try {
 - `ValidationError` - Invalid page data
 - `NotFoundError` - Page not found
 - Standard JavaScript errors for other cases
-
-## Demo
-
-Try the [interactive demo](https://motioneffector.github.io/wiki/demo.html) to see the library in action.
 
 ## Use Cases
 
