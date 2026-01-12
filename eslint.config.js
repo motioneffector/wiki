@@ -24,5 +24,8 @@ export default tseslint.config(
       '@typescript-eslint/prefer-nullish-coalescing': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
     },
+  },
+  {
+    ignores: ['**/*.test.ts'],
   }
 )

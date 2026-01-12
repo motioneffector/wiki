@@ -16,7 +16,7 @@ export function extractLinks(content: string, pattern: RegExp = DEFAULT_LINK_PAT
     let linkText = match[1]?.trim()
 
     // Skip links with newlines
-    if (linkText && linkText.includes('\n')) {
+    if (linkText?.includes('\n')) {
       continue
     }
 
@@ -58,7 +58,7 @@ function removeCodeBlocks(content: string): string {
   result = result.replace(/`[^`\n]*?`/g, '')
 
   // Remove indented code blocks (4 spaces at start of line)
-  result = result.replace(/^    .*/gm, '')
+  result = result.replace(/^ {4}.*/gm, '')
 
   return result
 }

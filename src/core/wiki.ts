@@ -22,6 +22,26 @@ import { memoryStorage } from '../storage/memory'
 
 const DEFAULT_LINK_PATTERN = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g
 
+/**
+ * Creates a new wiki instance for managing interconnected pages with bidirectional linking.
+ *
+ * @param options - Configuration options
+ * @param options.storage - Custom storage adapter implementing WikiStorage interface (defaults to memoryStorage)
+ * @param options.linkPattern - Custom regex pattern for link syntax (defaults to `[[Page Title]]` format)
+ * @returns A new Wiki instance with full API access
+ *
+ * @example
+ * ```typescript
+ * import { createWiki } from '@motioneffector/wiki'
+ *
+ * const wiki = createWiki()
+ * await wiki.createPage({ title: 'Home', content: 'Welcome to [[About|my wiki]]!' })
+ * ```
+ *
+ * @throws {TypeError} If storage doesn't implement WikiStorage interface
+ * @throws {TypeError} If linkPattern is not a RegExp
+ * @throws {Error} If linkPattern doesn't have a capture group
+ */
 export function createWiki(options?: WikiOptions): Wiki {
   // Validate options
   if (options?.storage) {
@@ -69,7 +89,10 @@ export function createWiki(options?: WikiOptions): Wiki {
       .replace(/-+/g, '-') // Collapse multiple hyphens
       .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
 
-    return normalized || `page-${nextFallbackId++}`
+    if (normalized) return normalized
+    const fallbackId = `page-${String(nextFallbackId)}`
+    nextFallbackId++
+    return fallbackId
   }
 
   // Helper: Generate unique ID
@@ -79,26 +102,28 @@ export function createWiki(options?: WikiOptions): Wiki {
     }
 
     let counter = 2
-    while (pages.has(`${baseId}-${counter}`)) {
+    while (pages.has(`${baseId}-${String(counter)}`)) {
       counter++
     }
-    return `${baseId}-${counter}`
+    return `${baseId}-${String(counter)}`
   }
 
   // Helper: Validate page data
   function validatePageData(data: CreatePageData | UpdatePageData, isUpdate = false): void {
-    if ('title' in data && data.title !== undefined) {
-      if (data.title === null) {
-        throw new Error('Title is required')
-      }
-      if (typeof data.title !== 'string') {
-        throw new Error('Title is required')
-      }
-      if (data.title.trim() === '') {
-        throw new Error('Title cannot be empty')
+    if ('title' in data) {
+      const title = data.title
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (title === undefined) {
+        if (!isUpdate) {
+          throw new ValidationError('Title is required')
+        }
+      } else if (typeof title !== 'string') {
+        throw new ValidationError('Title is required')
+      } else if (title.trim() === '') {
+        throw new ValidationError('Title cannot be empty')
       }
     } else if (!isUpdate) {
-      throw new Error('Title is required')
+      throw new ValidationError('Title is required')
     }
 
     if ('tags' in data && data.tags !== undefined) {
@@ -112,7 +137,7 @@ export function createWiki(options?: WikiOptions): Wiki {
       }
     }
 
-    if ('type' in data && data.type !== undefined && data.type !== null) {
+    if ('type' in data && data.type !== undefined) {
       if (typeof data.type !== 'string') {
         throw new TypeError('Type must be a string')
       }
@@ -131,7 +156,10 @@ export function createWiki(options?: WikiOptions): Wiki {
       if (!backlinkIndex.has(targetId)) {
         backlinkIndex.set(targetId, new Set())
       }
-      backlinkIndex.get(targetId)!.add(pageId)
+      const backlinks = backlinkIndex.get(targetId)
+      if (backlinks) {
+        backlinks.add(pageId)
+      }
     }
   }
 
@@ -189,8 +217,8 @@ export function createWiki(options?: WikiOptions): Wiki {
         id,
         title,
         content,
-        type: data.type,
-        tags: data.tags,
+        ...(data.type !== undefined && { type: data.type }),
+        ...(data.tags !== undefined && { tags: data.tags }),
         created: now,
         modified: now,
       }
@@ -249,8 +277,20 @@ export function createWiki(options?: WikiOptions): Wiki {
       // Update fields
       if (data.title !== undefined) page.title = data.title
       if (data.content !== undefined) page.content = data.content
-      if ('type' in data) page.type = data.type
-      if ('tags' in data) page.tags = data.tags
+      if ('type' in data) {
+        if (data.type === undefined) {
+          delete page.type
+        } else {
+          page.type = data.type
+        }
+      }
+      if ('tags' in data) {
+        if (data.tags === undefined) {
+          delete page.tags
+        } else {
+          page.tags = data.tags
+        }
+      }
       page.modified = new Date()
 
       // Re-index links if content changed
@@ -336,20 +376,20 @@ export function createWiki(options?: WikiOptions): Wiki {
           }
 
           // Update backlink index references
-          for (const links of linkIndex.values()) {
-            const linkArray = Array.from(links)
+          for (const sourceLinks of linkIndex.values()) {
+            const linkArray = Array.from(sourceLinks)
             for (const linkText of linkArray) {
               if (slugify(linkText) === id) {
-                links.delete(linkText)
-                links.add(newTitle)
+                sourceLinks.delete(linkText)
+                sourceLinks.add(newTitle)
               }
             }
           }
 
-          for (const backlinks of backlinkIndex.values()) {
-            if (backlinks.has(id)) {
-              backlinks.delete(id)
-              backlinks.add(newId)
+          for (const targetBacklinks of backlinkIndex.values()) {
+            if (targetBacklinks.has(id)) {
+              targetBacklinks.delete(id)
+              targetBacklinks.add(newId)
             }
           }
         }
@@ -378,7 +418,7 @@ export function createWiki(options?: WikiOptions): Wiki {
       for (const linkText of links) {
         const targetId = slugify(linkText)
         const page = pages.get(targetId)
-        if (page) {
+        if (page !== undefined) {
           linkedPages.push({ ...page })
         }
       }
@@ -388,7 +428,7 @@ export function createWiki(options?: WikiOptions): Wiki {
 
     getBacklinkPages(id: string): WikiPage[] {
       const backlinks = wiki.getBacklinks(id)
-      return backlinks.map(bid => pages.get(bid)).filter((p): p is WikiPage => !!p).map(p => ({ ...p }))
+      return backlinks.map(bid => pages.get(bid)).filter((p): p is WikiPage => p !== undefined).map(p => ({ ...p }))
     },
 
     resolveLink(linkText: string): string {
@@ -463,8 +503,8 @@ export function createWiki(options?: WikiOptions): Wiki {
       const connectedIds = new Set<string>()
 
       while (queue.length > 0) {
-        const current = queue.shift()!
-        if (visited.has(current.id)) continue
+        const current = queue.shift()
+        if (!current || visited.has(current.id)) continue
         visited.add(current.id)
         connectedIds.add(current.id)
 
@@ -504,9 +544,11 @@ export function createWiki(options?: WikiOptions): Wiki {
 
       // Filter by tags
       if (options?.tags && options.tags.length > 0) {
+        const filterTags = options.tags
         result = result.filter(p => {
-          if (!p.tags) return false
-          return options.tags!.some(tag => p.tags!.includes(tag))
+          const pageTags = p.tags
+          if (!pageTags) return false
+          return filterTags.some(tag => pageTags.includes(tag))
         })
       }
 
@@ -521,7 +563,8 @@ export function createWiki(options?: WikiOptions): Wiki {
           compareResult = a.title.localeCompare(b.title)
         } else if (sortField === 'created') {
           compareResult = a.created.getTime() - b.created.getTime()
-        } else if (sortField === 'modified') {
+        } else {
+          // sortField === 'modified'
           compareResult = a.modified.getTime() - b.modified.getTime()
         }
 
