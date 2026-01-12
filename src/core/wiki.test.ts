@@ -278,21 +278,33 @@ describe('Page Creation', () => {
       await expect(
         wiki.createPage({ title: 'Test', tags: 'not-array' as any })
       ).rejects.toThrow(TypeError)
+      await expect(
+        wiki.createPage({ title: 'Test', tags: 'not-array' as any })
+      ).rejects.toThrow('Tags must be an array')
     })
 
     it('throws TypeError "Each tag must be a non-empty string" if tags contains non-strings', async () => {
       await expect(wiki.createPage({ title: 'Test', tags: [123] as any })).rejects.toThrow(
         TypeError
       )
+      await expect(wiki.createPage({ title: 'Test', tags: [123] as any })).rejects.toThrow(
+        'Each tag must be a non-empty string'
+      )
     })
 
     it('throws TypeError "Each tag must be a non-empty string" if tags contains empty strings', async () => {
       await expect(wiki.createPage({ title: 'Test', tags: [''] })).rejects.toThrow(TypeError)
+      await expect(wiki.createPage({ title: 'Test', tags: [''] })).rejects.toThrow(
+        'Each tag must be a non-empty string'
+      )
     })
 
     it('throws TypeError "Type must be a string" if type is not a string', async () => {
       await expect(wiki.createPage({ title: 'Test', type: 123 as any })).rejects.toThrow(
         TypeError
+      )
+      await expect(wiki.createPage({ title: 'Test', type: 123 as any })).rejects.toThrow(
+        'Type must be a string'
       )
     })
   })

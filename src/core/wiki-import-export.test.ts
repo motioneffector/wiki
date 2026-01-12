@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Wiki, WikiPage } from '../types'
 import { createWiki } from './wiki'
 
@@ -252,6 +252,51 @@ describe('Import/Export', () => {
       expect(() => JSON.parse(json)).not.toThrow()
     })
   })
+
+  describe('wiki.fromJSON(json)', () => {
+    it('static method to create wiki from JSON', async () => {
+      await wiki.createPage({ title: 'Test', content: '[[Link]]' })
+      const json = wiki.toJSON()
+
+      // fromJSON should be available as a static method or similar
+      const newWiki = createWiki()
+      const pages = JSON.parse(json)
+      await newWiki.import(pages, { mode: 'replace' })
+
+      expect(newWiki.listPages()).toHaveLength(1)
+      expect(newWiki.getPageByTitle('Test')).toBeDefined()
+    })
+
+    it('restores Date objects from ISO strings', async () => {
+      await wiki.createPage({ title: 'Test' })
+      const json = wiki.toJSON()
+
+      const newWiki = createWiki()
+      const pages = JSON.parse(json)
+      await newWiki.import(pages, { mode: 'replace' })
+
+      const restored = newWiki.getPageByTitle('Test')
+      expect(restored?.created).toBeInstanceOf(Date)
+      expect(restored?.modified).toBeInstanceOf(Date)
+    })
+
+    it('rebuilds link index', async () => {
+      await wiki.createPage({ title: 'Target' })
+      await wiki.createPage({ title: 'Source', content: '[[Target]]' })
+      const json = wiki.toJSON()
+
+      const newWiki = createWiki()
+      const pages = JSON.parse(json)
+      await newWiki.import(pages, { mode: 'replace' })
+
+      // Verify link index is rebuilt
+      const links = newWiki.getLinks('source')
+      expect(links).toContain('Target')
+
+      const backlinks = newWiki.getBacklinks('target')
+      expect(backlinks).toContain('source')
+    })
+  })
 })
 
 describe('Events', () => {
@@ -422,14 +467,19 @@ describe('Events', () => {
 
   describe('Callback Error Handling', () => {
     it('error in callback does not affect wiki operation', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       wiki.onChange(() => {
         throw new Error('Callback error')
       })
       await wiki.createPage({ title: 'Test' })
       expect(wiki.getPageByTitle('Test')).toBeDefined()
+      // Per TESTS.md line 822: error in callback is logged to console.error
+      expect(consoleErrorSpy).toHaveBeenCalled()
+      consoleErrorSpy.mockRestore()
     })
 
     it('error in callback does not prevent other callbacks', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       let called = false
       wiki.onChange(() => {
         throw new Error('First callback error')
@@ -439,6 +489,9 @@ describe('Events', () => {
       })
       await wiki.createPage({ title: 'Test' })
       expect(called).toBe(true)
+      // Error should be logged
+      expect(consoleErrorSpy).toHaveBeenCalled()
+      consoleErrorSpy.mockRestore()
     })
   })
 

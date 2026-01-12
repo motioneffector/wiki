@@ -55,7 +55,11 @@ describe('Link Extraction', () => {
 
     it('display text is preserved in raw content, not modified', () => {
       const content = '[[Page|Display]]'
+      const links = extractLinks(content)
+      // The extraction should not modify the original content string
       expect(content).toBe('[[Page|Display]]')
+      // Verify that extraction worked but returned only target, not display text
+      expect(links).toEqual(['Page'])
     })
 
     it('getLinks() returns Page Title, not Display Text', () => {
@@ -164,6 +168,8 @@ describe('Link Extraction', () => {
       const content = '[[Outer [[Inner]] End]]'
       const links = extractLinks(content)
       expect(links.length).toBeGreaterThan(0)
+      // Per TESTS.md: greedy match extracts 'Outer [[Inner' (stops at first ]])
+      expect(links[0]).toBe('Outer [[Inner')
     })
 
     it('special characters in link: [[Hello, World!]] extracts Hello, World!', () => {

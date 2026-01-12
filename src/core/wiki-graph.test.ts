@@ -230,9 +230,21 @@ describe('Link Graph', () => {
 
     it('returns [self] if page exists but has no connections (depth >= 0)', async () => {
       const page = await wiki.createPage({ title: 'Isolated' })
-      const connected = wiki.getConnectedPages(page.id, 0)
-      expect(connected).toHaveLength(1)
-      expect(connected[0]?.id).toBe(page.id)
+
+      // Test depth 0
+      const connected0 = wiki.getConnectedPages(page.id, 0)
+      expect(connected0).toHaveLength(1)
+      expect(connected0[0]?.id).toBe(page.id)
+
+      // Test depth 1 - should still return only self for isolated page
+      const connected1 = wiki.getConnectedPages(page.id, 1)
+      expect(connected1).toHaveLength(1)
+      expect(connected1[0]?.id).toBe(page.id)
+
+      // Test depth 2 - should still return only self for isolated page
+      const connected2 = wiki.getConnectedPages(page.id, 2)
+      expect(connected2).toHaveLength(1)
+      expect(connected2[0]?.id).toBe(page.id)
     })
   })
 

@@ -80,12 +80,12 @@ describe('Edge Cases & Error Handling', () => {
 
     it('handles wiki with 10,000+ pages (performance test)', async () => {
       const promises = []
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 10000; i++) {
         promises.push(wiki.createPage({ title: `Page${i}` }))
       }
       await Promise.all(promises)
-      expect(wiki.listPages()).toHaveLength(100)
-    }, 10000)
+      expect(wiki.listPages().length).toBeGreaterThanOrEqual(10000)
+    }, 30000)
   })
 
   describe('Empty/Minimal States', () => {
