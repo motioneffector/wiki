@@ -52,6 +52,11 @@
       grid-column: 1 / -1;
     }
 
+    #test-runner {
+      border: 3px solid #3498db;
+      background: #f8fbff;
+    }
+
     h2 {
       color: #2c3e50;
       margin-bottom: 15px;
@@ -127,6 +132,17 @@
       background: #2980b9;
     }
 
+    button.run-all {
+      background: #27ae60;
+      font-size: 18px;
+      padding: 15px 30px;
+      font-weight: bold;
+    }
+
+    button.run-all:hover {
+      background: #229954;
+    }
+
     button.secondary {
       background: #95a5a6;
     }
@@ -164,6 +180,57 @@
     .output.empty {
       color: #999;
       font-style: italic;
+    }
+
+    .test-output {
+      background: #f5f5f5;
+      padding: 15px;
+      font-family: 'Courier New', monospace;
+      white-space: pre-wrap;
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-top: 15px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .test-pass {
+      color: #27ae60;
+      font-weight: bold;
+    }
+
+    .test-fail {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .test-running {
+      color: #f39c12;
+      font-weight: bold;
+    }
+
+    .summary {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 4px;
+      background: #fff;
+      border: 2px solid #ddd;
+    }
+
+    .summary.all-pass {
+      background: #d4edda;
+      border-color: #27ae60;
+      color: #155724;
+    }
+
+    .summary.has-fail {
+      background: #f8d7da;
+      border-color: #e74c3c;
+      color: #721c24;
     }
 
     pre {
@@ -395,6 +462,27 @@
       margin-bottom: 0;
     }
 
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 15px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #27ae60, #2ecc71);
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
     @media (max-width: 768px) {
       .container {
         grid-template-columns: 1fr;
@@ -412,7 +500,24 @@
 </head>
 <body>
   <h1>@motioneffector/wiki</h1>
-  <p class="subtitle">Interactive demonstration of wiki/knowledge base with bidirectional linking</p>
+  <p class="subtitle">Interactive demonstration with automated tests and manual exploration</p>
+
+  <section id="test-runner" class="full-width">
+    <h2>🧪 Automated Test Suite</h2>
+    <p class="description">Comprehensive tests covering all public API methods, error handling, and edge cases.</p>
+
+    <div class="flex-buttons">
+      <button class="run-all" onclick="runAllTests()">▶ Run All Tests</button>
+      <button class="secondary" onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div class="progress-bar" id="progressBar" style="display: none;">
+      <div class="progress-fill" id="progressFill">0%</div>
+    </div>
+
+    <div class="summary" id="summary"></div>
+    <div class="test-output" id="testOutput"></div>
+  </section>
 
   <section class="full-width">
     <h2>📊 Wiki Statistics</h2>
@@ -713,38 +818,803 @@
     </div>
   </section>
 
-  <section class="full-width">
-    <h2>🧪 Test Edge Cases</h2>
-    <p class="description">Try these to see error handling and edge case behavior.</p>
-
-    <div class="flex-buttons">
-      <button onclick="testEmptyTitle()">Empty Title</button>
-      <button onclick="testDuplicateId()">Duplicate ID</button>
-      <button onclick="testInvalidTags()">Invalid Tags</button>
-      <button onclick="testCodeBlockLinks()">Code Block Links</button>
-      <button onclick="testUnicode()">Unicode Support</button>
-      <button onclick="testSelfLink()">Self-Referential Link</button>
-      <button onclick="testCircularLinks()">Circular Links</button>
-      <button onclick="testDisplayTextSyntax()">Display Text Syntax</button>
-    </div>
-
-    <div id="testOutput" class="output empty">Test results will appear here</div>
-  </section>
-
   <script type="module">
     import { createWiki, memoryStorage } from './dist/index.js'
 
-    // Initialize wiki
-    const wiki = createWiki({ storage: memoryStorage() })
+    // Initialize wiki for manual exploration
+    let wiki = createWiki({ storage: memoryStorage() })
     window.wiki = wiki // For debugging
 
-    // Subscribe to events
+    // Test definitions
+    const tests = [
+      // === Wiki Creation ===
+      {
+        name: 'creates wiki instance with no options',
+        fn: async () => {
+          const w = createWiki()
+          if (!w) throw new Error('Wiki is undefined')
+          if (typeof w.createPage !== 'function') throw new Error('Missing createPage method')
+        }
+      },
+      {
+        name: 'accepts storage adapter option',
+        fn: async () => {
+          const w = createWiki({ storage: memoryStorage() })
+          if (!w) throw new Error('Wiki is undefined')
+        }
+      },
+      {
+        name: 'accepts custom link pattern option',
+        fn: async () => {
+          const w = createWiki({ linkPattern: /\{\{([^}]+)\}\}/g })
+          const page = await w.createPage({ title: 'Test', content: '{{Link}}' })
+          const links = w.getLinks(page.id)
+          if (links.length !== 1 || links[0] !== 'Link') {
+            throw new Error(`Expected {{Link}} to be extracted, got: ${links.join(', ')}`)
+          }
+        }
+      },
+      {
+        name: 'starts with no pages',
+        fn: async () => {
+          const w = createWiki()
+          const pages = w.listPages()
+          if (pages.length !== 0) throw new Error(`Expected 0 pages, got ${pages.length}`)
+        }
+      },
+      {
+        name: 'throws TypeError if storage is invalid',
+        fn: async () => {
+          try {
+            createWiki({ storage: { notValid: true } })
+            throw new Error('Should have thrown TypeError')
+          } catch (e) {
+            if (e.name !== 'TypeError') throw new Error(`Expected TypeError, got ${e.name}`)
+          }
+        }
+      },
+      {
+        name: 'throws TypeError if linkPattern is not RegExp',
+        fn: async () => {
+          try {
+            createWiki({ linkPattern: 'not-a-regex' })
+            throw new Error('Should have thrown TypeError')
+          } catch (e) {
+            if (e.name !== 'TypeError') throw new Error(`Expected TypeError, got ${e.name}`)
+          }
+        }
+      },
+      {
+        name: 'throws Error if linkPattern has no capture group',
+        fn: async () => {
+          try {
+            createWiki({ linkPattern: /\[\[[^\]]+\]\]/g })
+            throw new Error('Should have thrown Error')
+          } catch (e) {
+            if (!e.message.includes('capture group')) {
+              throw new Error(`Expected capture group error, got: ${e.message}`)
+            }
+          }
+        }
+      },
+
+      // === Page Creation ===
+      {
+        name: 'creates page with title and content',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'Test Page', content: 'Test content' })
+          if (page.title !== 'Test Page') throw new Error('Title not set')
+          if (page.content !== 'Test content') throw new Error('Content not set')
+        }
+      },
+      {
+        name: 'generates id from title if not provided',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'King Aldric I' })
+          if (page.id !== 'king-aldric-i') {
+            throw new Error(`Expected 'king-aldric-i', got '${page.id}'`)
+          }
+        }
+      },
+      {
+        name: 'uses provided id exactly if given',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'Test', id: 'custom-id' })
+          if (page.id !== 'custom-id') throw new Error(`Expected 'custom-id', got '${page.id}'`)
+        }
+      },
+      {
+        name: 'throws Error if id already exists',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'First', id: 'duplicate' })
+          try {
+            await w.createPage({ title: 'Second', id: 'duplicate' })
+            throw new Error('Should have thrown Error')
+          } catch (e) {
+            if (!e.message.includes('already exists')) {
+              throw new Error(`Expected 'already exists' error, got: ${e.message}`)
+            }
+          }
+        }
+      },
+      {
+        name: 'appends number if generated slug exists',
+        fn: async () => {
+          const w = createWiki()
+          const p1 = await w.createPage({ title: 'Test' })
+          const p2 = await w.createPage({ title: 'Test' })
+          const p3 = await w.createPage({ title: 'Test' })
+          if (p1.id !== 'test') throw new Error(`Expected 'test', got '${p1.id}'`)
+          if (p2.id !== 'test-2') throw new Error(`Expected 'test-2', got '${p2.id}'`)
+          if (p3.id !== 'test-3') throw new Error(`Expected 'test-3', got '${p3.id}'`)
+        }
+      },
+      {
+        name: 'sets created and modified timestamps',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'Test' })
+          if (!(page.created instanceof Date)) throw new Error('created is not a Date')
+          if (!(page.modified instanceof Date)) throw new Error('modified is not a Date')
+        }
+      },
+      {
+        name: 'throws Error for empty title',
+        fn: async () => {
+          const w = createWiki()
+          try {
+            await w.createPage({ title: '' })
+            throw new Error('Should have thrown Error')
+          } catch (e) {
+            if (!e.message.includes('empty')) {
+              throw new Error(`Expected 'empty' error, got: ${e.message}`)
+            }
+          }
+        }
+      },
+      {
+        name: 'accepts optional type and tags',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({
+            title: 'Test',
+            type: 'person',
+            tags: ['important', 'test']
+          })
+          if (page.type !== 'person') throw new Error('Type not set')
+          if (!page.tags || page.tags.length !== 2) throw new Error('Tags not set')
+        }
+      },
+
+      // === Link Extraction ===
+      {
+        name: 'extracts links from content',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({
+            title: 'Test',
+            content: 'Links to [[Page A]] and [[Page B]]'
+          })
+          const links = w.getLinks(page.id)
+          if (links.length !== 2) throw new Error(`Expected 2 links, got ${links.length}`)
+          if (!links.includes('Page A')) throw new Error('Missing Page A')
+          if (!links.includes('Page B')) throw new Error('Missing Page B')
+        }
+      },
+      {
+        name: 'ignores links in code blocks',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({
+            title: 'Test',
+            content: '[[Real]]\n```\n[[Not Real]]\n```\n`[[Also Not]]`'
+          })
+          const links = w.getLinks(page.id)
+          if (links.length !== 1 || links[0] !== 'Real') {
+            throw new Error(`Expected only 'Real', got: ${links.join(', ')}`)
+          }
+        }
+      },
+      {
+        name: 'extracts display text syntax [[Page|Display]]',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({
+            title: 'Test',
+            content: 'Read [[Documentation|the docs]]'
+          })
+          const links = w.getLinks(page.id)
+          if (links.length !== 1 || links[0] !== 'Documentation') {
+            throw new Error(`Expected 'Documentation', got: ${links.join(', ')}`)
+          }
+        }
+      },
+      {
+        name: 'deduplicates repeated links',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({
+            title: 'Test',
+            content: '[[Link]] and [[Link]] again'
+          })
+          const links = w.getLinks(page.id)
+          if (links.length !== 1) {
+            throw new Error(`Expected 1 unique link, got ${links.length}`)
+          }
+        }
+      },
+
+      // === Bidirectional Links ===
+      {
+        name: 'tracks backlinks automatically',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Target' })
+          await w.createPage({ title: 'Source', content: '[[Target]]' })
+          const backlinks = w.getBacklinks('target')
+          if (backlinks.length !== 1 || backlinks[0] !== 'source') {
+            throw new Error(`Expected backlink from 'source', got: ${backlinks.join(', ')}`)
+          }
+        }
+      },
+      {
+        name: 'updates backlinks when page content changes',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Target' })
+          const source = await w.createPage({ title: 'Source', content: '[[Target]]' })
+
+          let backlinks = w.getBacklinks('target')
+          if (backlinks.length !== 1) throw new Error('Backlink not created')
+
+          await w.updatePage(source.id, { content: 'No links' })
+          backlinks = w.getBacklinks('target')
+          if (backlinks.length !== 0) throw new Error('Backlink not removed')
+        }
+      },
+      {
+        name: 'returns linked page objects with getLinkedPages',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Target' })
+          const source = await w.createPage({ title: 'Source', content: '[[Target]]' })
+          const linked = w.getLinkedPages(source.id)
+          if (linked.length !== 1 || linked[0].title !== 'Target') {
+            throw new Error('getLinkedPages failed')
+          }
+        }
+      },
+
+      // === Page Retrieval ===
+      {
+        name: 'getPage returns page by id',
+        fn: async () => {
+          const w = createWiki()
+          const created = await w.createPage({ title: 'Test' })
+          const retrieved = w.getPage(created.id)
+          if (!retrieved || retrieved.id !== created.id) {
+            throw new Error('getPage failed')
+          }
+        }
+      },
+      {
+        name: 'getPage returns undefined for non-existent id',
+        fn: async () => {
+          const w = createWiki()
+          const page = w.getPage('nonexistent')
+          if (page !== undefined) throw new Error('Should return undefined')
+        }
+      },
+      {
+        name: 'getPageByTitle returns page by exact title',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Exact Title' })
+          const page = w.getPageByTitle('Exact Title')
+          if (!page || page.title !== 'Exact Title') throw new Error('getPageByTitle failed')
+        }
+      },
+      {
+        name: 'getPageByTitle with ignoreCase option',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Test Page' })
+          const page = w.getPageByTitle('test page', { ignoreCase: true })
+          if (!page || page.title !== 'Test Page') {
+            throw new Error('ignoreCase option failed')
+          }
+        }
+      },
+
+      // === Page Updates ===
+      {
+        name: 'updatePage updates specified fields',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'Original', content: 'Old' })
+          const updated = await w.updatePage(page.id, { content: 'New' })
+          if (updated.content !== 'New') throw new Error('Content not updated')
+          if (updated.title !== 'Original') throw new Error('Title should not change')
+        }
+      },
+      {
+        name: 'updatePage updates modified timestamp',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'Test' })
+          await new Promise(resolve => setTimeout(resolve, 10))
+          const updated = await w.updatePage(page.id, { content: 'New' })
+          if (updated.modified.getTime() <= page.modified.getTime()) {
+            throw new Error('Modified timestamp not updated')
+          }
+        }
+      },
+      {
+        name: 'updatePage throws Error for non-existent page',
+        fn: async () => {
+          const w = createWiki()
+          try {
+            await w.updatePage('nonexistent', { content: 'New' })
+            throw new Error('Should have thrown Error')
+          } catch (e) {
+            if (!e.message.includes('not found')) {
+              throw new Error(`Expected 'not found' error, got: ${e.message}`)
+            }
+          }
+        }
+      },
+
+      // === Page Deletion ===
+      {
+        name: 'deletePage removes page from wiki',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'To Delete' })
+          await w.deletePage(page.id)
+          const retrieved = w.getPage(page.id)
+          if (retrieved !== undefined) throw new Error('Page still exists')
+        }
+      },
+      {
+        name: 'deletePage creates dead links',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Target' })
+          await w.createPage({ title: 'Source', content: '[[Target]]' })
+          await w.deletePage('target')
+          const deadLinks = w.getDeadLinks()
+          if (deadLinks.length !== 1) {
+            throw new Error(`Expected 1 dead link, got ${deadLinks.length}`)
+          }
+        }
+      },
+
+      // === Link Resolution ===
+      {
+        name: 'resolveLink normalizes to page id',
+        fn: async () => {
+          const w = createWiki()
+          const id1 = w.resolveLink('Kingdom of Aldoria')
+          const id2 = w.resolveLink('kingdom of aldoria')
+          const id3 = w.resolveLink('KINGDOM OF ALDORIA')
+          if (id1 !== 'kingdom-of-aldoria' || id2 !== 'kingdom-of-aldoria' || id3 !== 'kingdom-of-aldoria') {
+            throw new Error('resolveLink not case-insensitive')
+          }
+        }
+      },
+      {
+        name: 'resolveLinkToPage returns page if exists',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Kingdom of Aldoria' })
+          const page = w.resolveLinkToPage('Kingdom of Aldoria')
+          if (!page || page.id !== 'kingdom-of-aldoria') {
+            throw new Error('resolveLinkToPage failed')
+          }
+        }
+      },
+
+      // === Dead Links & Orphans ===
+      {
+        name: 'getDeadLinks finds links to non-existent pages',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Source', content: '[[Nonexistent]]' })
+          const deadLinks = w.getDeadLinks()
+          if (deadLinks.length !== 1) {
+            throw new Error(`Expected 1 dead link, got ${deadLinks.length}`)
+          }
+          if (deadLinks[0].target !== 'Nonexistent') {
+            throw new Error(`Expected target 'Nonexistent', got '${deadLinks[0].target}'`)
+          }
+        }
+      },
+      {
+        name: 'getOrphans finds pages with no backlinks',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Orphan' })
+          await w.createPage({ title: 'Linked' })
+          await w.createPage({ title: 'Linker', content: '[[Linked]]' })
+          const orphans = w.getOrphans()
+          const orphanIds = orphans.map(p => p.id)
+          if (!orphanIds.includes('orphan')) throw new Error('Missing orphan')
+          if (orphanIds.includes('linked')) throw new Error('Linked page should not be orphan')
+        }
+      },
+      {
+        name: 'self-referential link prevents orphan status',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Self', content: '[[Self]]' })
+          const orphans = w.getOrphans()
+          if (orphans.length > 0) throw new Error('Self-linked page is orphan')
+        }
+      },
+
+      // === Graph Operations ===
+      {
+        name: 'getGraph returns adjacency list',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'A', content: '[[B]]' })
+          await w.createPage({ title: 'B' })
+          const graph = w.getGraph()
+          if (!graph['a'] || !graph['a'].includes('b')) {
+            throw new Error('Graph structure incorrect')
+          }
+        }
+      },
+      {
+        name: 'getConnectedPages traverses graph',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'A', content: '[[B]]' })
+          await w.createPage({ title: 'B', content: '[[C]]' })
+          await w.createPage({ title: 'C' })
+          const connected = w.getConnectedPages('a', 2)
+          if (connected.length !== 3) {
+            throw new Error(`Expected 3 connected pages, got ${connected.length}`)
+          }
+        }
+      },
+      {
+        name: 'getConnectedPages handles cycles',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'A', content: '[[B]]' })
+          await w.createPage({ title: 'B', content: '[[C]]' })
+          await w.createPage({ title: 'C', content: '[[A]]' })
+          const connected = w.getConnectedPages('a', 10)
+          if (connected.length !== 3) {
+            throw new Error('Cycle handling failed - infinite loop or wrong count')
+          }
+        }
+      },
+
+      // === Search ===
+      {
+        name: 'search finds pages by title',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Magic Sword' })
+          await w.createPage({ title: 'Other' })
+          const results = w.search('magic')
+          if (results.length !== 1 || results[0].title !== 'Magic Sword') {
+            throw new Error('Search by title failed')
+          }
+        }
+      },
+      {
+        name: 'search is case-insensitive',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Test Page' })
+          const results = w.search('test')
+          if (results.length !== 1) throw new Error('Case-insensitive search failed')
+        }
+      },
+      {
+        name: 'search with fields option',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Title Match', content: 'different' })
+          await w.createPage({ title: 'Different', content: 'Title Match' })
+          const titleResults = w.search('Title Match', { fields: ['title'] })
+          if (titleResults.length !== 1 || titleResults[0].title !== 'Title Match') {
+            throw new Error('Search fields option failed')
+          }
+        }
+      },
+
+      // === List & Filter ===
+      {
+        name: 'listPages returns all pages',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Page 1' })
+          await w.createPage({ title: 'Page 2' })
+          const pages = w.listPages()
+          if (pages.length !== 2) throw new Error(`Expected 2 pages, got ${pages.length}`)
+        }
+      },
+      {
+        name: 'listPages filters by type',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Person', type: 'person' })
+          await w.createPage({ title: 'Place', type: 'place' })
+          const people = w.listPages({ type: 'person' })
+          if (people.length !== 1 || people[0].title !== 'Person') {
+            throw new Error('Type filter failed')
+          }
+        }
+      },
+      {
+        name: 'listPages filters by tags',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Tagged', tags: ['important'] })
+          await w.createPage({ title: 'Untagged' })
+          const tagged = w.listPages({ tags: ['important'] })
+          if (tagged.length !== 1 || tagged[0].title !== 'Tagged') {
+            throw new Error('Tag filter failed')
+          }
+        }
+      },
+      {
+        name: 'listPages sorts pages',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'B Page' })
+          await new Promise(resolve => setTimeout(resolve, 10))
+          await w.createPage({ title: 'A Page' })
+          const byTitle = w.listPages({ sort: 'title', order: 'asc' })
+          if (byTitle[0].title !== 'A Page' || byTitle[1].title !== 'B Page') {
+            throw new Error('Sort by title failed')
+          }
+        }
+      },
+
+      // === Import/Export ===
+      {
+        name: 'export returns array of pages',
+        fn: async () => {
+          const w = createWiki()
+          await w.createPage({ title: 'Test' })
+          const exported = w.export()
+          if (!Array.isArray(exported) || exported.length !== 1) {
+            throw new Error('Export failed')
+          }
+        }
+      },
+      {
+        name: 'import loads pages',
+        fn: async () => {
+          const w = createWiki()
+          const data = [{
+            id: 'test',
+            title: 'Test',
+            content: '',
+            created: new Date().toISOString(),
+            modified: new Date().toISOString()
+          }]
+          const count = await w.import(data, { mode: 'replace' })
+          if (count !== 1) throw new Error('Import count wrong')
+          const page = w.getPage('test')
+          if (!page) throw new Error('Imported page not found')
+        }
+      },
+      {
+        name: 'import rebuilds link indexes',
+        fn: async () => {
+          const w = createWiki()
+          const data = [
+            {
+              id: 'a',
+              title: 'A',
+              content: '[[B]]',
+              created: new Date().toISOString(),
+              modified: new Date().toISOString()
+            },
+            {
+              id: 'b',
+              title: 'B',
+              content: '',
+              created: new Date().toISOString(),
+              modified: new Date().toISOString()
+            }
+          ]
+          await w.import(data, { mode: 'replace' })
+          const backlinks = w.getBacklinks('b')
+          if (backlinks.length !== 1 || backlinks[0] !== 'a') {
+            throw new Error('Import did not rebuild indexes')
+          }
+        }
+      },
+
+      // === Events ===
+      {
+        name: 'fires create event',
+        fn: async () => {
+          const w = createWiki()
+          let eventFired = false
+          w.on('create', () => { eventFired = true })
+          await w.createPage({ title: 'Test' })
+          if (!eventFired) throw new Error('Create event not fired')
+        }
+      },
+      {
+        name: 'fires update event',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'Test' })
+          let eventFired = false
+          w.on('update', () => { eventFired = true })
+          await w.updatePage(page.id, { content: 'New' })
+          if (!eventFired) throw new Error('Update event not fired')
+        }
+      },
+      {
+        name: 'fires delete event',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'Test' })
+          let eventFired = false
+          w.on('delete', () => { eventFired = true })
+          await w.deletePage(page.id)
+          if (!eventFired) throw new Error('Delete event not fired')
+        }
+      },
+      {
+        name: 'unsubscribe stops callbacks',
+        fn: async () => {
+          const w = createWiki()
+          let count = 0
+          const unsubscribe = w.on('create', () => { count++ })
+          await w.createPage({ title: 'Test 1' })
+          unsubscribe()
+          await w.createPage({ title: 'Test 2' })
+          if (count !== 1) throw new Error(`Expected 1 event, got ${count}`)
+        }
+      },
+
+      // === Edge Cases ===
+      {
+        name: 'handles unicode in titles',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: '日本語テスト' })
+          if (!page.id) throw new Error('Unicode title failed')
+          const retrieved = w.getPageByTitle('日本語テスト')
+          if (!retrieved) throw new Error('Unicode retrieval failed')
+        }
+      },
+      {
+        name: 'handles special characters in titles',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: "The \"Great\" War" })
+          if (page.title !== "The \"Great\" War") throw new Error('Special chars not preserved')
+        }
+      },
+      {
+        name: 'handles empty content',
+        fn: async () => {
+          const w = createWiki()
+          const page = await w.createPage({ title: 'Empty', content: '' })
+          if (page.content !== '') throw new Error('Empty content failed')
+        }
+      },
+      {
+        name: 'handles very long link text',
+        fn: async () => {
+          const w = createWiki()
+          const longText = 'A'.repeat(1000)
+          const page = await w.createPage({
+            title: 'Test',
+            content: `[[${longText}]]`
+          })
+          const links = w.getLinks(page.id)
+          if (links.length !== 1 || links[0] !== longText) {
+            throw new Error('Long link text failed')
+          }
+        }
+      }
+    ]
+
+    // Test runner implementation
+    let testResults = []
+    let isRunning = false
+
+    window.runAllTests = async function() {
+      if (isRunning) {
+        alert('Tests are already running!')
+        return
+      }
+
+      isRunning = true
+      testResults = []
+
+      const output = document.getElementById('testOutput')
+      const summary = document.getElementById('summary')
+      const progressBar = document.getElementById('progressBar')
+      const progressFill = document.getElementById('progressFill')
+
+      output.textContent = ''
+      summary.textContent = ''
+      summary.className = 'summary'
+      progressBar.style.display = 'block'
+
+      let passed = 0
+      let failed = 0
+
+      for (let i = 0; i < tests.length; i++) {
+        const test = tests[i]
+        const progress = Math.round(((i + 1) / tests.length) * 100)
+        progressFill.style.width = progress + '%'
+        progressFill.textContent = `${i + 1}/${tests.length} tests (${progress}%)`
+
+        try {
+          await test.fn()
+          passed++
+          logTestResult(test.name, 'PASS', null)
+        } catch (e) {
+          failed++
+          logTestResult(test.name, 'FAIL', e.message)
+        }
+
+        // Small delay to show progress
+        await new Promise(resolve => setTimeout(resolve, 10))
+      }
+
+      progressBar.style.display = 'none'
+
+      const total = passed + failed
+      const summaryText = `\n${'='.repeat(60)}\nTest Summary: ${passed}/${total} passed${failed > 0 ? `, ${failed} FAILED` : ''}\n${'='.repeat(60)}`
+      output.textContent += summaryText
+
+      summary.textContent = `${passed}/${total} tests passed`
+      summary.className = failed === 0 ? 'summary all-pass' : 'summary has-fail'
+
+      isRunning = false
+
+      // Auto-scroll to summary
+      summary.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+
+    function logTestResult(name, status, error) {
+      const output = document.getElementById('testOutput')
+      const prefix = status === 'PASS' ? '✓' : '✗'
+      const statusClass = status === 'PASS' ? 'test-pass' : 'test-fail'
+
+      let line = `${prefix} ${name}`
+      if (error) {
+        line += `\n  Error: ${error}`
+      }
+
+      output.textContent += line + '\n'
+      output.scrollTop = output.scrollHeight
+    }
+
+    window.clearResults = function() {
+      document.getElementById('testOutput').textContent = ''
+      document.getElementById('summary').textContent = ''
+      document.getElementById('summary').className = 'summary'
+      document.getElementById('progressBar').style.display = 'none'
+    }
+
+    // Subscribe to events for manual exploration
     wiki.on('create', event => logEvent('create', `Created: ${event.page.title}`))
     wiki.on('update', event => logEvent('update', `Updated: ${event.page.title}`))
     wiki.on('delete', event => logEvent('delete', `Deleted: ${event.page.title}`))
     wiki.on('rename', event => logEvent('rename', `Renamed: ${event.previousTitle} → ${event.page.title}`))
 
-    // Helper functions
+    // Helper functions for manual interaction
     function showMessage(elementId, message, isError = false) {
       const el = document.getElementById(elementId)
       el.innerHTML = `<div class="${isError ? 'error-message' : 'success-message'}">${message}</div>`
@@ -774,7 +1644,6 @@
       document.getElementById('statOrphans').textContent = orphans.length
       document.getElementById('statDeadLinks').textContent = deadLinks.length
 
-      // Update filter dropdowns
       updateFilterOptions()
     }
 
@@ -818,7 +1687,7 @@
       `
     }
 
-    // Page operations
+    // Manual interaction functions
     window.createPage = async function() {
       try {
         const title = document.getElementById('pageTitle').value
@@ -1186,144 +2055,6 @@
       document.getElementById('eventLog').innerHTML = '<div style="color: #999; font-style: italic;">Events cleared...</div>'
     }
 
-    // Test functions
-    window.testEmptyTitle = async function() {
-      try {
-        await wiki.createPage({ title: '' })
-        document.getElementById('testOutput').innerHTML = '<div class="error-message">Should have thrown error!</div>'
-      } catch (error) {
-        document.getElementById('testOutput').innerHTML = `
-          <div class="success-message">
-            ✓ Correctly threw error: ${error.message}
-          </div>
-        `
-      }
-    }
-
-    window.testDuplicateId = async function() {
-      try {
-        await wiki.createPage({ title: 'Test Page', id: 'test-duplicate' })
-        await wiki.createPage({ title: 'Another Page', id: 'test-duplicate' })
-        document.getElementById('testOutput').innerHTML = '<div class="error-message">Should have thrown error!</div>'
-      } catch (error) {
-        document.getElementById('testOutput').innerHTML = `
-          <div class="success-message">
-            ✓ Correctly threw error: ${error.message}
-          </div>
-        `
-      }
-    }
-
-    window.testInvalidTags = async function() {
-      try {
-        await wiki.createPage({ title: 'Test', tags: 'not-an-array' })
-        document.getElementById('testOutput').innerHTML = '<div class="error-message">Should have thrown error!</div>'
-      } catch (error) {
-        document.getElementById('testOutput').innerHTML = `
-          <div class="success-message">
-            ✓ Correctly threw TypeError: ${error.message}
-          </div>
-        `
-      }
-    }
-
-    window.testCodeBlockLinks = async function() {
-      const content = `
-Regular link: [[Normal Link]]
-
-Code block:
-\`\`\`
-[[Not A Link]]
-\`\`\`
-
-Inline: \`[[Also Not A Link]]\`
-
-After code: [[Real Link]]
-      `
-      const page = await wiki.createPage({ title: 'Code Test', content })
-      const links = wiki.getLinks(page.id)
-
-      document.getElementById('testOutput').innerHTML = `
-        <div class="success-message">
-          ✓ Code block test passed!<br>
-          Found ${links.length} links: ${links.join(', ')}<br>
-          (Should be: Normal Link, Real Link)
-        </div>
-      `
-      document.getElementById('testOutput').classList.remove('empty')
-    }
-
-    window.testUnicode = async function() {
-      const page = await wiki.createPage({
-        title: '日本語テスト',
-        content: 'Links to [[Café München]] and [[Здравствуй]]'
-      })
-      const links = wiki.getLinks(page.id)
-
-      document.getElementById('testOutput').innerHTML = `
-        <div class="success-message">
-          ✓ Unicode test passed!<br>
-          Created page: ${page.title} (ID: ${page.id})<br>
-          Found ${links.length} links: ${links.join(', ')}
-        </div>
-      `
-      document.getElementById('testOutput').classList.remove('empty')
-    }
-
-    window.testSelfLink = async function() {
-      const page = await wiki.createPage({
-        title: 'Self Reference',
-        content: 'This page links to [[Self Reference]]'
-      })
-      const backlinks = wiki.getBacklinks(page.id)
-      const isOrphan = wiki.getOrphans().some(p => p.id === page.id)
-
-      document.getElementById('testOutput').innerHTML = `
-        <div class="success-message">
-          ✓ Self-link test passed!<br>
-          Page has ${backlinks.length} backlink(s) (including self)<br>
-          Is orphan: ${isOrphan} (should be false)
-        </div>
-      `
-      document.getElementById('testOutput').classList.remove('empty')
-    }
-
-    window.testCircularLinks = async function() {
-      const a = await wiki.createPage({ title: 'Page A', content: 'Links to [[Page B]]' })
-      const b = await wiki.createPage({ title: 'Page B', content: 'Links to [[Page C]]' })
-      const c = await wiki.createPage({ title: 'Page C', content: 'Links to [[Page A]]' })
-
-      const connected = wiki.getConnectedPages(a.id, 10)
-
-      document.getElementById('testOutput').innerHTML = `
-        <div class="success-message">
-          ✓ Circular link test passed!<br>
-          Created A → B → C → A cycle<br>
-          Connected pages (depth 10): ${connected.length}<br>
-          (Should be 3, not infinite)
-        </div>
-      `
-      document.getElementById('testOutput').classList.remove('empty')
-    }
-
-    window.testDisplayTextSyntax = async function() {
-      const page = await wiki.createPage({
-        title: 'Display Test',
-        content: 'Read more at [[Documentation|the docs]] and [[API Reference|here]]'
-      })
-      const links = wiki.getLinks(page.id)
-
-      document.getElementById('testOutput').innerHTML = `
-        <div class="success-message">
-          ✓ Display text syntax test passed!<br>
-          Found ${links.length} links: ${links.join(', ')}<br>
-          (Display text is preserved, link targets extracted)
-        </div>
-      `
-      document.getElementById('testOutput').classList.remove('empty')
-    }
-
-    // Load example data
     window.loadExampleData = async function() {
       if (wiki.listPages().length > 0) {
         if (!confirm('This will clear the current wiki and load example data. Continue?')) {
@@ -1332,7 +2063,7 @@ After code: [[Real Link]]
       }
 
       try {
-        await wiki.import([], { mode: 'replace' }) // Clear existing
+        await wiki.import([], { mode: 'replace' })
 
         await wiki.createPage({
           title: 'Kingdom of Aldoria',
