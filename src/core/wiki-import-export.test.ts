@@ -2,6 +2,79 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Wiki, WikiPage } from '../types'
 import { createWiki } from './wiki'
 
+describe('Security: prototype pollution prevention', () => {
+  let wiki: Wiki
+
+  beforeEach(() => {
+    wiki = createWiki()
+  })
+
+  it('rejects __proto__ key in imported pages', async () => {
+    const malicious: any = {
+      id: 'test',
+      title: 'Test',
+      content: '',
+      created: new Date(),
+      modified: new Date(),
+      __proto__: { polluted: true },
+    }
+
+    await wiki.import([malicious])
+    expect((({} as any).polluted)).toBeUndefined()
+  })
+
+  it('rejects constructor key in imported pages', async () => {
+    const malicious: any = {
+      id: 'test',
+      title: 'Test',
+      content: '',
+      created: new Date(),
+      modified: new Date(),
+      constructor: { prototype: { polluted: true } },
+    }
+
+    await wiki.import([malicious])
+    expect((({} as any).polluted)).toBeUndefined()
+  })
+
+  it('rejects prototype key in imported pages', async () => {
+    const malicious: any = {
+      id: 'test',
+      title: 'Test',
+      content: '',
+      created: new Date(),
+      modified: new Date(),
+      prototype: { polluted: true },
+    }
+
+    await wiki.import([malicious])
+    // Verify Object.prototype wasn't modified
+    expect((({} as any).polluted)).toBeUndefined()
+  })
+
+  it('only imports own properties from page data', async () => {
+    const proto = { injected: 'malicious' }
+    const malicious = Object.create(proto)
+    malicious.id = 'test'
+    malicious.title = 'Test'
+    malicious.content = ''
+    malicious.created = new Date()
+    malicious.modified = new Date()
+
+    await wiki.import([malicious])
+    const page = wiki.getPage('test')
+    expect((page as any).injected).toBeUndefined()
+  })
+
+  it('handles JSON.parse prototype pollution attempts', async () => {
+    const json = '{"__proto__": {"polluted": true}, "id": "test", "title": "Test", "content": "", "created": "2024-01-01T00:00:00.000Z", "modified": "2024-01-01T00:00:00.000Z"}'
+    const parsed = JSON.parse(json)
+
+    await wiki.import([parsed])
+    expect((({} as any).polluted)).toBeUndefined()
+  })
+})
+
 describe('Import/Export', () => {
   let wiki: Wiki
 

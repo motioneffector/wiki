@@ -1,6 +1,81 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { Wiki, WikiPage, WikiStorage } from '../types'
 import { createWiki } from './wiki'
+import { ValidationError } from '../errors'
+
+describe('Security: input validation', () => {
+  let wiki: Wiki
+
+  beforeEach(() => {
+    wiki = createWiki()
+  })
+
+  it('rejects title exceeding maximum length', async () => {
+    const longTitle = 'x'.repeat(1001)
+    await expect(wiki.createPage({ title: longTitle })).rejects.toThrow(ValidationError)
+    await expect(wiki.createPage({ title: longTitle })).rejects.toThrow(/maximum length/)
+  })
+
+  it('rejects content exceeding maximum length', async () => {
+    const hugeContent = 'x'.repeat(10_000_001)
+    await expect(wiki.createPage({ title: 'Test', content: hugeContent })).rejects.toThrow(
+      ValidationError
+    )
+    await expect(wiki.createPage({ title: 'Test', content: hugeContent })).rejects.toThrow(
+      /maximum length/
+    )
+  })
+
+  it('rejects tag exceeding maximum length', async () => {
+    const longTag = 'x'.repeat(101)
+    await expect(wiki.createPage({ title: 'Test', tags: [longTag] })).rejects.toThrow(
+      ValidationError
+    )
+    await expect(wiki.createPage({ title: 'Test', tags: [longTag] })).rejects.toThrow(
+      /maximum length/
+    )
+  })
+
+  it('rejects tags array exceeding maximum count', async () => {
+    const manyTags = Array.from({ length: 101 }, (_, i) => `tag${i}`)
+    await expect(wiki.createPage({ title: 'Test', tags: manyTags })).rejects.toThrow(
+      ValidationError
+    )
+    await expect(wiki.createPage({ title: 'Test', tags: manyTags })).rejects.toThrow(
+      /maximum count/
+    )
+  })
+
+  it('accepts title at maximum length', async () => {
+    const maxTitle = 'x'.repeat(1000)
+    const page = await wiki.createPage({ title: maxTitle })
+    expect(page.title).toBe(maxTitle)
+  })
+
+  it('accepts content at maximum length', async () => {
+    const maxContent = 'x'.repeat(10_000_000)
+    const page = await wiki.createPage({ title: 'Test', content: maxContent })
+    expect(page.content).toBe(maxContent)
+  })
+
+  it('accepts tag at maximum length', async () => {
+    const maxTag = 'x'.repeat(100)
+    const page = await wiki.createPage({ title: 'Test', tags: [maxTag] })
+    expect(page.tags).toContain(maxTag)
+  })
+
+  it('accepts tags array at maximum count', async () => {
+    const maxTags = Array.from({ length: 100 }, (_, i) => `tag${i}`)
+    const page = await wiki.createPage({ title: 'Test', tags: maxTags })
+    expect(page.tags).toHaveLength(100)
+  })
+
+  it('validates length on update operations', async () => {
+    const page = await wiki.createPage({ title: 'Test' })
+    const longTitle = 'x'.repeat(1001)
+    await expect(wiki.updatePage(page.id, { title: longTitle })).rejects.toThrow(ValidationError)
+  })
+})
 
 describe('Wiki Creation', () => {
   describe('createWiki(options?)', () => {
