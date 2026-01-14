@@ -1120,7 +1120,7 @@ textarea.input {
       <div class="test-runner-header">
         <h2 class="test-runner-title">Test Suite</h2>
         <div class="test-runner-actions">
-          <button class="btn btn-primary" id="run-tests">Run Tests</button>
+          <button class="btn btn-primary" id="run-tests">Run All Tests</button>
           <button class="btn btn-secondary" id="run-fuzz" style="display: none;">Run Fuzz Tests</button>
         </div>
       </div>
@@ -1132,7 +1132,7 @@ textarea.input {
           <div class="test-progress-text" id="progress-text">Ready to run tests</div>
         </div>
         <div class="test-output" id="test-output">
-          <div class="test-output-empty">Click "Run Tests" to execute the test suite</div>
+          <div class="test-output-empty">Click "Run All Tests" to execute the test suite</div>
         </div>
         <div class="test-summary hidden" id="test-summary">
           <div class="test-summary-item passed">
@@ -2574,27 +2574,10 @@ const testRunner = {
     progressFill.style.width = '0%';
     progressFill.className = 'test-progress-fill';
 
-    // Run visual demo first
-    progressText.textContent = 'Running visual demonstration...';
-    output.innerHTML = '<div class="test-output-empty">Demonstrating all exhibits - watch the page!</div>';
-    await visualDemo.run();
-
-    // Reset wiki state after visual demo before running tests
-    wiki = createWiki();
-    await wiki.import(initialPages, { mode: 'replace' });
-    selectedCardId = 'king-aldric';
-    initializeCardPositions();
-    renderWikiCards();
-    renderGraphExplorer();
-    renderWorkshop();
-    selectCard('king-aldric');
-
-    output.innerHTML = '';
-    progressText.textContent = 'Running tests...';
-
     let passed = 0;
     let failed = 0;
 
+    // Run all tests first
     for (let i = 0; i < this.tests.length; i++) {
       const test = this.tests[i];
       const progress = ((i + 1) / this.tests.length) * 100;
@@ -2637,6 +2620,24 @@ const testRunner = {
     failedCount.textContent = failed;
     skippedCount.textContent = 0;
     summary.classList.remove('hidden');
+
+    // After tests complete, run visual demo
+    await new Promise(r => setTimeout(r, 500));
+    progressText.textContent = `Tests done (${passed}/${this.tests.length}) - Now demonstrating exhibits...`;
+
+    // Reset wiki state before visual demo
+    wiki = createWiki();
+    await wiki.import(initialPages, { mode: 'replace' });
+    selectedCardId = 'king-aldric';
+    initializeCardPositions();
+    renderWikiCards();
+    renderGraphExplorer();
+    renderWorkshop();
+    selectCard('king-aldric');
+
+    await visualDemo.run();
+
+    progressText.textContent = `Complete: ${passed}/${this.tests.length} passed`;
 
     runBtn.disabled = false;
     this.running = false;
