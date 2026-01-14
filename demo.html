@@ -1005,17 +1005,20 @@ textarea.input {
     <header class="header">
       <h1 class="header-title">@motioneffector/wiki</h1>
       <p class="header-description">A TypeScript library for creating interconnected knowledge bases with bidirectional linking and graph analysis</p>
-      <nav class="header-links">
-        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link" target="_blank">
-          npm
-        </a>
-        <a href="https://github.com/motioneffector/wiki" class="header-link" target="_blank">
-          GitHub
-        </a>
-        <a href="https://github.com/motioneffector/wiki/wiki" class="header-link" target="_blank">
-          Manual
-        </a>
-      </nav>
+      <div class="flex items-center justify-between">
+        <nav class="header-links">
+          <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link" target="_blank">
+            npm
+          </a>
+          <a href="https://github.com/motioneffector/wiki" class="header-link" target="_blank">
+            GitHub
+          </a>
+          <a href="https://github.com/motioneffector/wiki/wiki" class="header-link" target="_blank">
+            Manual
+          </a>
+        </nav>
+        <button class="btn btn-secondary" onclick="location.reload()">Reset Page</button>
+      </div>
     </header>
 
     <main class="exhibits">
@@ -2571,6 +2574,24 @@ const testRunner = {
     progressFill.style.width = '0%';
     progressFill.className = 'test-progress-fill';
 
+    // Run visual demo first
+    progressText.textContent = 'Running visual demonstration...';
+    output.innerHTML = '<div class="test-output-empty">Demonstrating all exhibits - watch the page!</div>';
+    await visualDemo.run();
+
+    // Reset wiki state after visual demo before running tests
+    wiki = createWiki();
+    await wiki.import(initialPages, { mode: 'replace' });
+    selectedCardId = 'king-aldric';
+    initializeCardPositions();
+    renderWikiCards();
+    renderGraphExplorer();
+    renderWorkshop();
+    selectCard('king-aldric');
+
+    output.innerHTML = '';
+    progressText.textContent = 'Running tests...';
+
     let passed = 0;
     let failed = 0;
 
@@ -3006,6 +3027,142 @@ testRunner.register('unsubscribe stops events', async () => {
   await w.createPage({ title: 'Second' });
   if (count !== 1) throw new Error('Unsubscribe failed');
 });
+
+// ============================================
+// VISUAL DEMO - Automated exhibit demonstration
+// ============================================
+
+const visualDemo = {
+  running: false,
+
+  async delay(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  },
+
+  scrollToElement(el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  },
+
+  async run() {
+    if (this.running) return;
+    this.running = true;
+
+    try {
+      // ===== EXHIBIT 1: Living Wiki =====
+      this.scrollToElement(document.getElementById('wiki-canvas'));
+      await this.delay(300);
+
+      // Select different cards in sequence
+      const cardIds = ['kingdom-of-valdoria', 'princess-elena', 'shadow-forest', 'sunblade', 'king-aldric'];
+      for (const id of cardIds) {
+        selectCard(id);
+        renderWikiCards();
+        await this.delay(400);
+      }
+
+      // Demonstrate typing a new link
+      const originalContent = wikiEditorContent.value;
+      wikiEditorContent.value = originalContent + ' Ally of [[Queen Mira]].';
+      wikiEditorContent.focus();
+      await this.delay(300);
+
+      // Save to show new ghost card appearing
+      await wiki.updatePage('king-aldric', {
+        title: wikiEditorTitle.value,
+        content: wikiEditorContent.value
+      });
+      initializeCardPositions();
+      renderWikiCards();
+      await this.delay(600);
+
+      // Click on a ghost card to create it
+      const ghostTitle = 'Queen Mira';
+      await wiki.createPage({ title: ghostTitle, content: 'The mysterious queen.', type: 'character', tags: ['royalty'] });
+      const ghostId = `ghost-${ghostTitle.toLowerCase().replace(/\s+/g, '-')}`;
+      const ghostPos = cardPositions.get(ghostId);
+      if (ghostPos) {
+        cardPositions.set('queen-mira', { x: ghostPos.x, y: ghostPos.y, isGhost: false });
+        cardPositions.delete(ghostId);
+      } else {
+        cardPositions.set('queen-mira', { x: 500, y: 250, isGhost: false });
+      }
+      selectCard('queen-mira');
+      renderWikiCards();
+      await this.delay(600);
+
+      // Auto-arrange cards
+      initializeCardPositions();
+      renderWikiCards();
+      await this.delay(400);
+
+      // ===== EXHIBIT 2: Graph Explorer =====
+      this.scrollToElement(document.getElementById('graph-canvas'));
+      renderGraphExplorer();
+      await this.delay(400);
+
+      // Select different nodes
+      const nodeIds = ['king-aldric', 'crystal-spire', 'sunblade', 'kingdom-of-valdoria'];
+      for (const id of nodeIds) {
+        graphSelectedNode = id;
+        updateGraphSelection();
+        await this.delay(350);
+      }
+
+      // Animate depth slider
+      for (let d = 0; d <= 3; d++) {
+        depthSlider.value = d;
+        updateGraphSelection();
+        await this.delay(300);
+      }
+      for (let d = 3; d >= 1; d--) {
+        depthSlider.value = d;
+        updateGraphSelection();
+        await this.delay(200);
+      }
+
+      // Shake the graph
+      document.getElementById('graph-shake-btn').click();
+      await this.delay(800);
+
+      // Fit view
+      document.getElementById('graph-fit-btn').click();
+      await this.delay(400);
+
+      // Toggle labels off and on
+      document.getElementById('graph-labels-toggle').click();
+      await this.delay(400);
+      document.getElementById('graph-labels-toggle').click();
+      await this.delay(300);
+
+      // ===== EXHIBIT 3: Tag & Type Workshop =====
+      this.scrollToElement(document.getElementById('workshop-container'));
+      renderWorkshop();
+      await this.delay(400);
+
+      // Search for different terms
+      const searchTerms = ['King', 'magic', 'royal', 'forest', 'legend', ''];
+      for (const term of searchTerms) {
+        workshopSearchInput.value = term;
+        workshopSearchInput.dispatchEvent(new Event('input'));
+        await this.delay(350);
+      }
+
+      // Highlight individual chips by clicking them
+      const chips = document.querySelectorAll('.page-chip');
+      for (let i = 0; i < Math.min(4, chips.length); i++) {
+        chips[i].click();
+        await this.delay(400);
+      }
+
+      // ===== Final: Scroll to test runner =====
+      this.scrollToElement(document.querySelector('.test-runner'));
+      await this.delay(200);
+
+    } finally {
+      this.running = false;
+    }
+  }
+};
 
 // ============================================
 // INITIALIZATION
