@@ -22,6 +22,35 @@ import { memoryStorage } from '../storage/memory'
 
 const DEFAULT_LINK_PATTERN = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g
 
+// Dangerous keys that could lead to prototype pollution
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
+// Maximum input lengths to prevent DoS
+const MAX_TITLE_LENGTH = 1000
+const MAX_CONTENT_LENGTH = 10_000_000 // 10MB
+const MAX_TAG_LENGTH = 100
+const MAX_TAGS_COUNT = 100
+
+/**
+ * Sanitizes page data to prevent prototype pollution attacks.
+ * Filters out dangerous keys that could modify object prototypes.
+ */
+function sanitizePageData(pageData: WikiPage): WikiPage {
+  const sanitized: Partial<WikiPage> = {}
+
+  for (const key of Object.keys(pageData)) {
+    if (FORBIDDEN_KEYS.has(key)) {
+      continue
+    }
+    if (!Object.hasOwn(pageData, key)) {
+      continue
+    }
+    sanitized[key as keyof WikiPage] = (pageData as any)[key]
+  }
+
+  return sanitized as WikiPage
+}
+
 /**
  * Creates a new wiki instance for managing interconnected pages with bidirectional linking.
  *
@@ -121,18 +150,33 @@ export function createWiki(options?: WikiOptions): Wiki {
         throw new ValidationError('Title is required')
       } else if (title.trim() === '') {
         throw new ValidationError('Title cannot be empty')
+      } else if (title.length > MAX_TITLE_LENGTH) {
+        throw new ValidationError(`Title exceeds maximum length of ${MAX_TITLE_LENGTH}`)
       }
     } else if (!isUpdate) {
       throw new ValidationError('Title is required')
+    }
+
+    if ('content' in data && data.content !== undefined) {
+      const content = data.content
+      if (typeof content === 'string' && content.length > MAX_CONTENT_LENGTH) {
+        throw new ValidationError(`Content exceeds maximum length of ${MAX_CONTENT_LENGTH}`)
+      }
     }
 
     if ('tags' in data && data.tags !== undefined) {
       if (!Array.isArray(data.tags)) {
         throw new TypeError('Tags must be an array')
       }
+      if (data.tags.length > MAX_TAGS_COUNT) {
+        throw new ValidationError(`Tags array exceeds maximum count of ${MAX_TAGS_COUNT}`)
+      }
       for (const tag of data.tags) {
         if (typeof tag !== 'string' || tag.trim() === '') {
           throw new TypeError('Each tag must be a non-empty string')
+        }
+        if (tag.length > MAX_TAG_LENGTH) {
+          throw new ValidationError(`Tag exceeds maximum length of ${MAX_TAG_LENGTH}`)
         }
       }
     }
@@ -732,12 +776,15 @@ export function createWiki(options?: WikiOptions): Wiki {
           continue
         }
 
+        // Sanitize page data to prevent prototype pollution
+        const sanitized = sanitizePageData(pageData)
+
         // Normalize dates
         const page: WikiPage = {
-          ...pageData,
-          created: pageData.created instanceof Date ? pageData.created : new Date(pageData.created),
+          ...sanitized,
+          created: sanitized.created instanceof Date ? sanitized.created : new Date(sanitized.created),
           modified:
-            pageData.modified instanceof Date ? pageData.modified : new Date(pageData.modified),
+            sanitized.modified instanceof Date ? sanitized.modified : new Date(sanitized.modified),
         }
 
         pages.set(page.id, page)
