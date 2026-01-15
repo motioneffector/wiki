@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dead Links &amp; Orphans - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Dead Links &amp; Orphans</h1>
+<p>Dead links point to pages that don&#39;t exist. Orphans are pages that nothing links to. Both are normal in growing wikis, and the library provides tools to find and manage them.</p>
+<h2>How It Works</h2>
+<p><strong>Dead links</strong> occur when content references a page that hasn&#39;t been created:</p>
+<pre><code>Page &quot;Story&quot;: &quot;The [[Hero]] found the [[Magic Sword]].&quot;
+                  ↓                    ↓
+              Hero exists        Magic Sword doesn&#39;t exist
+                                      ↓
+                              This is a dead link
+</code></pre>
+<p><strong>Orphans</strong> are pages with no incoming links - no other page references them:</p>
+<pre><code>Page &quot;Index&quot; → links to → &quot;Chapter 1&quot; → links to → &quot;Chapter 2&quot;
+
+Page &quot;Random Notes&quot; ← nothing links here = ORPHAN
+</code></pre>
+<p>Orphans aren&#39;t necessarily problems (your home page might be an orphan by design), but they can indicate forgotten or disconnected content.</p>
+<h2>Basic Usage</h2>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+await wiki.createPage({
+  title: &#39;Story&#39;,
+  content: &#39;The [[Hero]] defeats the [[Dragon]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Hero&#39;,
+  content: &#39;The protagonist.&#39;
+})
+
+// Find all dead links in the wiki
+const deadLinks = wiki.getDeadLinks()
+console.log(deadLinks)
+// [{ source: &#39;story&#39;, target: &#39;Dragon&#39; }]
+
+// Find dead links for a specific page
+const storyDeadLinks = wiki.getDeadLinksForPage(&#39;story&#39;)
+console.log(storyDeadLinks)
+// [&#39;Dragon&#39;]
+
+// Find orphan pages
+const orphans = wiki.getOrphans()
+console.log(orphans.map(p =&gt; p.title))
+// [&#39;Story&#39;] - nothing links to Story yet
+</code></pre>
+<h2>Key Points</h2>
+<ul>
+<li><p><strong><code>getDeadLinks()</code></strong> returns an array of <code>{ source, target }</code> objects. <code>source</code> is the page ID containing the link, <code>target</code> is the link text (not normalized).</p>
+</li>
+<li><p><strong><code>getDeadLinksForPage(id)</code></strong> returns just the dead link texts for one specific page. Useful for showing warnings on a page editor.</p>
+</li>
+<li><p><strong><code>getOrphans()</code></strong> returns full <code>WikiPage</code> objects of all pages with zero incoming links.</p>
+</li>
+<li><p><strong>Creating the target page &quot;heals&quot; dead links</strong> - Once you create &quot;Dragon&quot;, it&#39;s no longer a dead link. No manual cleanup needed.</p>
+</li>
+<li><p><strong>Self-links prevent orphan status</strong> - A page that links to itself (like <code>[[Home]]</code> on the Home page) is not considered an orphan.</p>
+</li>
+</ul>
+<h2>Examples</h2>
+<h3>Dead Link Report</h3>
+<pre><code class="language-typescript">function generateDeadLinkReport(wiki: Wiki) {
+  const deadLinks = wiki.getDeadLinks()
+
+  // Group by source page
+  const bySource = new Map&lt;string, string[]&gt;()
+  for (const { source, target } of deadLinks) {
+    if (!bySource.has(source)) {
+      bySource.set(source, [])
+    }
+    bySource.get(source)!.push(target)
+  }
+
+  // Format report
+  for (const [sourceId, targets] of bySource) {
+    const page = wiki.getPage(sourceId)
+    console.log(`\n${page?.title ?? sourceId}:`)
+    for (const target of targets) {
+      console.log(`  - [[${target}]] (missing)`)
+    }
+  }
+}
+</code></pre>
+<h3>Auto-Create Missing Pages</h3>
+<pre><code class="language-typescript">async function createMissingPages(wiki: Wiki) {
+  const deadLinks = wiki.getDeadLinks()
+  const created: string[] = []
+
+  // Get unique targets
+  const missingTitles = [...new Set(deadLinks.map(dl =&gt; dl.target))]
+
+  for (const title of missingTitles) {
+    await wiki.createPage({
+      title,
+      content: `TODO: Add content for ${title}`
+    })
+    created.push(title)
+  }
+
+  return created
+}
+</code></pre>
+<h3>Finding Disconnected Content</h3>
+<pre><code class="language-typescript">function findDisconnectedContent(wiki: Wiki) {
+  const orphans = wiki.getOrphans()
+  const deadLinks = wiki.getDeadLinks()
+
+  return {
+    // Pages nothing links to
+    unreachable: orphans.map(p =&gt; p.title),
+
+    // Intended pages that don&#39;t exist
+    missing: [...new Set(deadLinks.map(dl =&gt; dl.target))],
+
+    // Health score
+    healthScore: calculateHealthScore(wiki, orphans, deadLinks)
+  }
+}
+
+function calculateHealthScore(wiki: Wiki, orphans: WikiPage[], deadLinks: DeadLink[]) {
+  const totalPages = wiki.listPages().length
+  if (totalPages === 0) return 100
+
+  const orphanPenalty = (orphans.length / totalPages) * 50
+  const deadLinkPenalty = Math.min(deadLinks.length * 2, 50)
+
+  return Math.max(0, 100 - orphanPenalty - deadLinkPenalty)
+}
+</code></pre>
+<h2>Related</h2>
+<ul>
+<li><strong><a href="concept-bidirectional-links.html">Bidirectional Links</a></strong> - How links are tracked</li>
+<li><strong><a href="guide-managing-dead-links.html">Managing Dead Links</a></strong> - Practical guide to wiki maintenance</li>
+<li><strong><a href="api-graph.html">Graph API</a></strong> - Full reference for dead links and orphans</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

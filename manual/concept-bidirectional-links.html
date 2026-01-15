@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bidirectional Links - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Bidirectional Links</h1>
+<p>When page A contains <code>[[B]]</code>, the library tracks this relationship in two directions: A&#39;s outgoing links and B&#39;s incoming backlinks. You don&#39;t need to maintain these indexes yourself - they update automatically as content changes.</p>
+<h2>How It Works</h2>
+<p>Think of links as one-way streets that the library maps from both ends:</p>
+<pre><code>Page A: &quot;See [[B]] for details&quot;
+         ↓
+    A → B (outgoing link from A)
+    B ← A (backlink to B)
+</code></pre>
+<p>The library maintains two indexes:</p>
+<ol>
+<li><strong>Link index</strong> - For each page, what pages does it link to?</li>
+<li><strong>Backlink index</strong> - For each page, what pages link to it?</li>
+</ol>
+<p>Both indexes update instantly when you create, update, or delete pages.</p>
+<h2>Basic Usage</h2>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+await wiki.createPage({
+  title: &#39;Characters&#39;,
+  content: &#39;Main characters: [[Hero]] and [[Villain]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Hero&#39;,
+  content: &#39;The protagonist. Nemesis of [[Villain]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Villain&#39;,
+  content: &#39;The antagonist.&#39;
+})
+
+// What does &quot;Characters&quot; link to?
+const links = wiki.getLinks(&#39;characters&#39;)
+console.log(links) // [&#39;Hero&#39;, &#39;Villain&#39;]
+
+// What links to &quot;Villain&quot;?
+const backlinks = wiki.getBacklinks(&#39;villain&#39;)
+console.log(backlinks) // [&#39;characters&#39;, &#39;hero&#39;]
+</code></pre>
+<h2>Key Points</h2>
+<ul>
+<li><p><strong><code>getLinks(id)</code></strong> returns the raw link text as written in content. If you wrote <code>[[King Aldric]]</code>, you get &quot;King Aldric&quot; (not the slugified ID).</p>
+</li>
+<li><p><strong><code>getBacklinks(id)</code></strong> returns page IDs of pages that link to this page. The argument is the target page&#39;s ID.</p>
+</li>
+<li><p><strong><code>getLinkedPages(id)</code> and <code>getBacklinkPages(id)</code></strong> return full <code>WikiPage</code> objects instead of strings/IDs. Useful when you need page details.</p>
+</li>
+<li><p><strong>Links to non-existent pages still work</strong> - If a page links to <code>[[Future Page]]</code> that doesn&#39;t exist yet, the link is tracked. When you create &quot;Future Page&quot;, the backlink appears automatically.</p>
+</li>
+</ul>
+<h2>Examples</h2>
+<h3>Building a &quot;What Links Here&quot; Feature</h3>
+<pre><code class="language-typescript">function getWhatLinksHere(wiki: Wiki, pageId: string) {
+  const backlinkPages = wiki.getBacklinkPages(pageId)
+
+  return backlinkPages.map(page =&gt; ({
+    title: page.title,
+    id: page.id,
+    // Optionally extract the context around the link
+    snippet: extractLinkContext(page.content, pageId)
+  }))
+}
+</code></pre>
+<h3>Finding the Most Connected Pages</h3>
+<pre><code class="language-typescript">function getMostLinkedPages(wiki: Wiki, limit = 10) {
+  const pages = wiki.listPages()
+
+  const ranked = pages.map(page =&gt; ({
+    page,
+    incomingCount: wiki.getBacklinks(page.id).length,
+    outgoingCount: wiki.getLinks(page.id).length,
+    totalConnections: wiki.getBacklinks(page.id).length + wiki.getLinks(page.id).length
+  }))
+
+  return ranked
+    .sort((a, b) =&gt; b.totalConnections - a.totalConnections)
+    .slice(0, limit)
+}
+</code></pre>
+<h3>Resolving Link Text to Pages</h3>
+<pre><code class="language-typescript">// Given link text, find the target page
+const targetId = wiki.resolveLink(&#39;King Aldric&#39;)
+console.log(targetId) // &#39;king-aldric&#39;
+
+// Or get the full page object
+const targetPage = wiki.resolveLinkToPage(&#39;King Aldric&#39;)
+if (targetPage) {
+  console.log(targetPage.title) // &#39;King Aldric&#39;
+}
+</code></pre>
+<h2>Related</h2>
+<ul>
+<li><strong><a href="concept-pages-and-links.html">Pages &amp; Links</a></strong> - Understanding pages and link syntax</li>
+<li><strong><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></strong> - When links point to missing pages</li>
+<li><strong><a href="guide-working-with-backlinks.html">Working with Backlinks</a></strong> - Practical guide for backlink features</li>
+<li><strong><a href="api-links.html">Links API</a></strong> - Full reference for link operations</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

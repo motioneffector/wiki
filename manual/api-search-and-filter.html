@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search &amp; Filter API - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Search &amp; Filter API</h1>
+<p>Functions for searching, filtering, and listing pages.</p>
+<hr>
+<h2><code>wiki.listPages()</code></h2>
+<p>Lists pages with optional filtering, sorting, and pagination.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">listPages(options?: ListPagesOptions): WikiPage[]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>options</code></td>
+<td><code>ListPagesOptions</code></td>
+<td>No</td>
+<td>Filter and sort options</td>
+</tr>
+</tbody></table>
+<p><strong>ListPagesOptions:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td><code>string</code></td>
+<td>Filter by page type</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>string[]</code></td>
+<td>Filter by tags (OR logic - matches any tag)</td>
+</tr>
+<tr>
+<td><code>sort</code></td>
+<td><code>&#39;title&#39; | &#39;created&#39; | &#39;modified&#39;</code></td>
+<td>Sort field. Default: <code>&#39;created&#39;</code></td>
+</tr>
+<tr>
+<td><code>order</code></td>
+<td><code>&#39;asc&#39; | &#39;desc&#39;</code></td>
+<td>Sort order. Default: <code>&#39;desc&#39;</code></td>
+</tr>
+<tr>
+<td><code>limit</code></td>
+<td><code>number</code></td>
+<td>Maximum pages to return</td>
+</tr>
+<tr>
+<td><code>offset</code></td>
+<td><code>number</code></td>
+<td>Number of pages to skip</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>WikiPage[]</code> — Array of matching pages</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">// All pages, newest first (default)
+const all = wiki.listPages()
+
+// Filter by type
+const people = wiki.listPages({ type: &#39;person&#39; })
+
+// Filter by tags (OR logic)
+const magical = wiki.listPages({ tags: [&#39;magic&#39;, &#39;spell&#39;] })
+
+// Combine type and tags (AND logic between them)
+const magicPeople = wiki.listPages({ type: &#39;person&#39;, tags: [&#39;magic&#39;] })
+
+// Sort alphabetically
+const alphabetical = wiki.listPages({ sort: &#39;title&#39;, order: &#39;asc&#39; })
+
+// Pagination
+const page2 = wiki.listPages({ offset: 10, limit: 10 })
+</code></pre>
+<hr>
+<h2><code>wiki.search()</code></h2>
+<p>Searches pages by text in title, content, and/or tags.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">search(query: string, options?: SearchOptions): WikiPage[]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>query</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Search text</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><code>SearchOptions</code></td>
+<td>No</td>
+<td>Search options</td>
+</tr>
+</tbody></table>
+<p><strong>SearchOptions:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>fields</code></td>
+<td><code>(&#39;title&#39; | &#39;content&#39; | &#39;tags&#39;)[]</code></td>
+<td>Fields to search. Default: <code>[&#39;title&#39;, &#39;content&#39;]</code></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>string</code></td>
+<td>Filter results by type</td>
+</tr>
+<tr>
+<td><code>limit</code></td>
+<td><code>number</code></td>
+<td>Maximum results</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>WikiPage[]</code> — Matching pages, ranked by relevance</p>
+<p><strong>Ranking:</strong></p>
+<ul>
+<li>Exact title match: highest score</li>
+<li>Title contains query: high score</li>
+<li>Tag contains query: medium score</li>
+<li>Content contains query: lower score</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">// Basic search (title and content)
+const results = wiki.search(&#39;magic&#39;)
+
+// Search only titles
+const titleOnly = wiki.search(&#39;magic&#39;, { fields: [&#39;title&#39;] })
+
+// Search tags
+const tagged = wiki.search(&#39;fire&#39;, { fields: [&#39;tags&#39;] })
+
+// Combine with type filter
+const magicSpells = wiki.search(&#39;fire&#39;, { type: &#39;spell&#39; })
+
+// Limit results
+const top5 = wiki.search(&#39;magic&#39;, { limit: 5 })
+</code></pre>
+<p>Returns empty array for empty or whitespace-only queries.</p>
+<hr>
+<h2><code>wiki.getTags()</code></h2>
+<p>Gets all unique tags used across all pages.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getTags(): string[]
+</code></pre>
+<p><strong>Returns:</strong> <code>string[]</code> — Sorted array of unique tags</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">await wiki.createPage({ title: &#39;A&#39;, tags: [&#39;magic&#39;, &#39;fire&#39;] })
+await wiki.createPage({ title: &#39;B&#39;, tags: [&#39;magic&#39;, &#39;ice&#39;] })
+
+const tags = wiki.getTags()
+console.log(tags) // [&#39;fire&#39;, &#39;ice&#39;, &#39;magic&#39;]
+</code></pre>
+<hr>
+<h2><code>wiki.getPagesByTag()</code></h2>
+<p>Gets all pages with a specific tag.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getPagesByTag(tag: string): WikiPage[]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tag</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The tag to filter by</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>WikiPage[]</code> — Pages with this tag</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">const magicPages = wiki.getPagesByTag(&#39;magic&#39;)
+for (const page of magicPages) {
+  console.log(page.title)
+}
+</code></pre>
+<p>Tag matching is case-sensitive.</p>
+<hr>
+<h2><code>wiki.getTypes()</code></h2>
+<p>Gets all unique types used across all pages.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getTypes(): string[]
+</code></pre>
+<p><strong>Returns:</strong> <code>string[]</code> — Sorted array of unique types</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">await wiki.createPage({ title: &#39;Alice&#39;, type: &#39;person&#39; })
+await wiki.createPage({ title: &#39;City&#39;, type: &#39;place&#39; })
+await wiki.createPage({ title: &#39;Bob&#39;, type: &#39;person&#39; })
+
+const types = wiki.getTypes()
+console.log(types) // [&#39;person&#39;, &#39;place&#39;]
+</code></pre>
+<hr>
+<h2><code>wiki.getPagesByType()</code></h2>
+<p>Gets all pages with a specific type.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getPagesByType(type: string): WikiPage[]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The type to filter by</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>WikiPage[]</code> — Pages with this type</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">const people = wiki.getPagesByType(&#39;person&#39;)
+console.log(people.map(p =&gt; p.title)) // [&#39;Alice&#39;, &#39;Bob&#39;]
+</code></pre>
+<p>Type matching is case-sensitive.</p>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

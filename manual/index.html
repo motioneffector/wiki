@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@motioneffector/wiki - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>@motioneffector/wiki</h1>
+<p>A wiki is a web of interconnected pages. This library handles the messy bookkeeping of link tracking so you can focus on your content. When you write <code>[[Page Title]]</code>, the library extracts those links, tracks them bidirectionally, and lets you query the relationship graph.</p>
+<h2>I want to...</h2>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Where to go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Get up and running quickly</td>
+<td><a href="your-first-wiki.html">Your First Wiki</a></td>
+</tr>
+<tr>
+<td>Understand how pages and links work</td>
+<td><a href="concept-pages-and-links.html">Pages &amp; Links</a></td>
+</tr>
+<tr>
+<td>Find what links to a page (backlinks)</td>
+<td><a href="guide-working-with-backlinks.html">Working with Backlinks</a></td>
+</tr>
+<tr>
+<td>Find broken links in my wiki</td>
+<td><a href="guide-managing-dead-links.html">Managing Dead Links</a></td>
+</tr>
+<tr>
+<td>Search and filter pages</td>
+<td><a href="guide-searching-pages.html">Searching Pages</a></td>
+</tr>
+<tr>
+<td>Export/import my data</td>
+<td><a href="guide-import-and-export.html">Import &amp; Export</a></td>
+</tr>
+<tr>
+<td>Build a custom storage backend</td>
+<td><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></td>
+</tr>
+<tr>
+<td>Look up a specific method</td>
+<td><a href="api-core.html">Core API</a></td>
+</tr>
+</tbody></table>
+<h2>Key Concepts</h2>
+<h3>Pages</h3>
+<p>The fundamental unit of content. A page has an id (auto-generated from title), title, content with <code>[[wikilinks]]</code>, optional type and tags, and timestamps for creation and modification.</p>
+<h3>Wikilinks</h3>
+<p>The <code>[[Page Title]]</code> syntax for linking between pages. Links are automatically extracted from content and tracked. You can also use <code>[[Page Title|Display Text]]</code> for custom display text.</p>
+<h3>Bidirectional Links</h3>
+<p>When page A links to page B, the library tracks this relationship in both directions. You can query what a page links to (outgoing) and what links to it (incoming backlinks) without maintaining these indexes yourself.</p>
+<h2>Quick Example</h2>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+// Create a wiki instance
+const wiki = createWiki()
+
+// Create pages with [[wikilinks]]
+await wiki.createPage({
+  title: &#39;Home&#39;,
+  content: &#39;Welcome! Check out [[Getting Started]] and [[Features]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Getting Started&#39;,
+  content: &#39;Start here. Back to [[Home]].&#39;
+})
+
+// Get backlinks - who links to &quot;Getting Started&quot;?
+const page = wiki.getPageByTitle(&#39;Getting Started&#39;)
+const backlinks = wiki.getBacklinks(page.id)
+console.log(backlinks) // [&#39;home&#39;]
+
+// Find dead links - &quot;Features&quot; doesn&#39;t exist yet
+const deadLinks = wiki.getDeadLinks()
+console.log(deadLinks) // [{ source: &#39;home&#39;, target: &#39;Features&#39; }]
+</code></pre>
+<hr>
+<p><strong><a href="api-core.html">Full API Reference →</a></strong></p>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

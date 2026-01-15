@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graph API - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Graph API</h1>
+<p>Functions for analyzing link structure, finding dead links, and exploring the wiki graph.</p>
+<hr>
+<h2><code>wiki.getDeadLinks()</code></h2>
+<p>Finds all links pointing to non-existent pages.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getDeadLinks(): DeadLink[]
+</code></pre>
+<p><strong>Returns:</strong> <code>DeadLink[]</code> — Array of dead link objects</p>
+<p><strong>DeadLink:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>source</code></td>
+<td><code>string</code></td>
+<td>Page ID containing the dead link</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>string</code></td>
+<td>Link text (the missing page reference)</td>
+</tr>
+</tbody></table>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">await wiki.createPage({
+  title: &#39;Story&#39;,
+  content: &#39;[[Hero]] defeats [[Dragon]].&#39;
+})
+await wiki.createPage({ title: &#39;Hero&#39;, content: &#39;&#39; })
+// Dragon doesn&#39;t exist
+
+const deadLinks = wiki.getDeadLinks()
+console.log(deadLinks)
+// [{ source: &#39;story&#39;, target: &#39;Dragon&#39; }]
+</code></pre>
+<hr>
+<h2><code>wiki.getDeadLinksForPage()</code></h2>
+<p>Finds dead links in a specific page.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getDeadLinksForPage(id: string): string[]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The page ID to check</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>string[]</code> — Array of link texts that don&#39;t resolve to pages</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">const deadLinks = wiki.getDeadLinksForPage(&#39;story&#39;)
+console.log(deadLinks) // [&#39;Dragon&#39;]
+</code></pre>
+<hr>
+<h2><code>wiki.getOrphans()</code></h2>
+<p>Finds pages with no incoming links.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getOrphans(): WikiPage[]
+</code></pre>
+<p><strong>Returns:</strong> <code>WikiPage[]</code> — Array of pages that nothing links to</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">await wiki.createPage({ title: &#39;Index&#39;, content: &#39;[[Page A]]&#39; })
+await wiki.createPage({ title: &#39;Page A&#39;, content: &#39;&#39; })
+await wiki.createPage({ title: &#39;Forgotten&#39;, content: &#39;&#39; })
+
+const orphans = wiki.getOrphans()
+console.log(orphans.map(p =&gt; p.title))
+// [&#39;Index&#39;, &#39;Forgotten&#39;]
+// Note: Index is orphan (nothing links to it)
+// Page A is not orphan (Index links to it)
+</code></pre>
+<hr>
+<h2><code>wiki.getGraph()</code></h2>
+<p>Gets the complete link graph as an adjacency list.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getGraph(): Graph
+</code></pre>
+<p><strong>Returns:</strong> <code>Graph</code> — Object mapping page IDs to arrays of linked IDs</p>
+<p><strong>Graph type:</strong></p>
+<pre><code class="language-typescript">type Graph = Record&lt;string, string[]&gt;
+</code></pre>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">await wiki.createPage({ title: &#39;A&#39;, content: &#39;[[B]] [[C]]&#39; })
+await wiki.createPage({ title: &#39;B&#39;, content: &#39;[[A]]&#39; })
+await wiki.createPage({ title: &#39;C&#39;, content: &#39;&#39; })
+
+const graph = wiki.getGraph()
+console.log(graph)
+// {
+//   &#39;a&#39;: [&#39;b&#39;, &#39;c&#39;],
+//   &#39;b&#39;: [&#39;a&#39;],
+//   &#39;c&#39;: []
+// }
+</code></pre>
+<p>The graph includes dead links (links to non-existent pages appear as target IDs without their own key).</p>
+<hr>
+<h2><code>wiki.getConnectedPages()</code></h2>
+<p>Finds pages within N links of a starting page.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getConnectedPages(id: string, depth?: number): WikiPage[]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Starting page ID</td>
+</tr>
+<tr>
+<td><code>depth</code></td>
+<td><code>number</code></td>
+<td>No</td>
+<td>Maximum link distance. Default: <code>1</code></td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>WikiPage[]</code> — Array of pages within the specified depth (includes starting page)</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">await wiki.createPage({ title: &#39;A&#39;, content: &#39;[[B]]&#39; })
+await wiki.createPage({ title: &#39;B&#39;, content: &#39;[[C]]&#39; })
+await wiki.createPage({ title: &#39;C&#39;, content: &#39;[[D]]&#39; })
+await wiki.createPage({ title: &#39;D&#39;, content: &#39;&#39; })
+
+// Depth 0: just the page itself
+const depth0 = wiki.getConnectedPages(&#39;a&#39;, 0)
+console.log(depth0.map(p =&gt; p.title)) // [&#39;A&#39;]
+
+// Depth 1: direct connections
+const depth1 = wiki.getConnectedPages(&#39;a&#39;, 1)
+console.log(depth1.map(p =&gt; p.title)) // [&#39;A&#39;, &#39;B&#39;]
+
+// Depth 2: two hops away
+const depth2 = wiki.getConnectedPages(&#39;a&#39;, 2)
+console.log(depth2.map(p =&gt; p.title)) // [&#39;A&#39;, &#39;B&#39;, &#39;C&#39;]
+
+// Includes both outgoing and incoming links
+await wiki.createPage({ title: &#39;X&#39;, content: &#39;[[A]]&#39; })
+const withBacklink = wiki.getConnectedPages(&#39;a&#39;, 1)
+console.log(withBacklink.map(p =&gt; p.title)) // [&#39;A&#39;, &#39;B&#39;, &#39;X&#39;]
+</code></pre>
+<p>Returns empty array if page doesn&#39;t exist. Handles cycles without infinite loops.</p>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

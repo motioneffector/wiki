@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Storage Adapters - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Custom Storage Adapters</h1>
+<p>Build a storage adapter to persist your wiki to any backend - files, databases, cloud services, or browser storage. This guide shows how to implement the WikiStorage interface.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="concept-storage.html">Understand storage concepts</a></li>
+<li>Be comfortable with async/await</li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll build a storage adapter by:</p>
+<ol>
+<li>Implementing the four required methods</li>
+<li>Handling Date serialization</li>
+<li>Connecting it to a wiki instance</li>
+</ol>
+<h2>Step 1: Understand the Interface</h2>
+<p>The WikiStorage interface has four async methods:</p>
+<pre><code class="language-typescript">interface WikiStorage {
+  save(page: WikiPage): Promise&lt;void&gt;
+  load(id: string): Promise&lt;WikiPage | null&gt;
+  delete(id: string): Promise&lt;void&gt;
+  list(): Promise&lt;WikiPage[]&gt;
+}
+</code></pre>
+<ul>
+<li><code>save</code> - Store or update a page</li>
+<li><code>load</code> - Retrieve a page by ID, or null if not found</li>
+<li><code>delete</code> - Remove a page</li>
+<li><code>list</code> - Return all stored pages</li>
+</ul>
+<h2>Step 2: Implement the Adapter</h2>
+<p>Here&#39;s a simple localStorage adapter for browsers:</p>
+<pre><code class="language-typescript">import { type WikiStorage, type WikiPage } from &#39;@motioneffector/wiki&#39;
+
+function localStorageAdapter(prefix = &#39;wiki&#39;): WikiStorage {
+  const key = (id: string) =&gt; `${prefix}:${id}`
+  const indexKey = `${prefix}:__index__`
+
+  function getIndex(): string[] {
+    const data = localStorage.getItem(indexKey)
+    return data ? JSON.parse(data) : []
+  }
+
+  function setIndex(ids: string[]) {
+    localStorage.setItem(indexKey, JSON.stringify(ids))
+  }
+
+  return {
+    async save(page: WikiPage) {
+      // Serialize with dates as ISO strings
+      localStorage.setItem(key(page.id), JSON.stringify(page))
+
+      // Update index
+      const index = getIndex()
+      if (!index.includes(page.id)) {
+        index.push(page.id)
+        setIndex(index)
+      }
+    },
+
+    async load(id: string) {
+      const data = localStorage.getItem(key(id))
+      if (!data) return null
+
+      const page = JSON.parse(data)
+      // Restore Date objects
+      page.created = new Date(page.created)
+      page.modified = new Date(page.modified)
+      return page
+    },
+
+    async delete(id: string) {
+      localStorage.removeItem(key(id))
+
+      // Update index
+      const index = getIndex().filter(i =&gt; i !== id)
+      setIndex(index)
+    },
+
+    async list() {
+      const index = getIndex()
+      const pages: WikiPage[] = []
+
+      for (const id of index) {
+        const page = await this.load(id)
+        if (page) pages.push(page)
+      }
+
+      return pages
+    }
+  }
+}
+</code></pre>
+<h2>Step 3: Connect to Wiki</h2>
+<p>Pass your adapter to <code>createWiki</code>:</p>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const storage = localStorageAdapter(&#39;my-wiki&#39;)
+const wiki = createWiki({ storage })
+
+// Pages are now persisted to localStorage
+await wiki.createPage({
+  title: &#39;Home&#39;,
+  content: &#39;Welcome!&#39;
+})
+
+// Reload the page - data persists
+const home = wiki.getPageByTitle(&#39;Home&#39;)
+console.log(home?.content) // &#39;Welcome!&#39;
+</code></pre>
+<h2>Complete Example</h2>
+<p>Here&#39;s a file-based adapter for Node.js:</p>
+<pre><code class="language-typescript">import { createWiki, type WikiStorage, type WikiPage } from &#39;@motioneffector/wiki&#39;
+import { readFile, writeFile, unlink, readdir, mkdir } from &#39;fs/promises&#39;
+import { join } from &#39;path&#39;
+
+function fileStorage(directory: string): WikiStorage {
+  // Ensure directory exists
+  const ensureDir = async () =&gt; {
+    try {
+      await mkdir(directory, { recursive: true })
+    } catch {
+      // Directory already exists
+    }
+  }
+
+  const filePath = (id: string) =&gt; join(directory, `${id}.json`)
+
+  return {
+    async save(page: WikiPage) {
+      await ensureDir()
+      const data = JSON.stringify(page, null, 2)
+      await writeFile(filePath(page.id), data, &#39;utf-8&#39;)
+    },
+
+    async load(id: string) {
+      try {
+        const data = await readFile(filePath(id), &#39;utf-8&#39;)
+        const page = JSON.parse(data)
+        page.created = new Date(page.created)
+        page.modified = new Date(page.modified)
+        return page
+      } catch {
+        return null
+      }
+    },
+
+    async delete(id: string) {
+      try {
+        await unlink(filePath(id))
+      } catch {
+        // File doesn&#39;t exist, that&#39;s fine
+      }
+    },
+
+    async list() {
+      await ensureDir()
+      const files = await readdir(directory)
+      const pages: WikiPage[] = []
+
+      for (const file of files) {
+        if (file.endsWith(&#39;.json&#39;)) {
+          const id = file.slice(0, -5) // Remove .json
+          const page = await this.load(id)
+          if (page) pages.push(page)
+        }
+      }
+
+      return pages
+    }
+  }
+}
+
+// Usage
+async function main() {
+  const storage = fileStorage(&#39;./wiki-data&#39;)
+  const wiki = createWiki({ storage })
+
+  // Load existing pages on startup
+  const existing = await storage.list()
+  if (existing.length &gt; 0) {
+    await wiki.import(existing, { mode: &#39;replace&#39; })
+    console.log(`Loaded ${existing.length} pages from disk`)
+  }
+
+  // Create a new page - automatically persisted
+  await wiki.createPage({
+    title: &#39;Hello World&#39;,
+    content: &#39;This will be saved to ./wiki-data/hello-world.json&#39;
+  })
+}
+
+main()
+</code></pre>
+<h2>Variations</h2>
+<h3>IndexedDB Adapter (Browser)</h3>
+<pre><code class="language-typescript">function indexedDBStorage(dbName = &#39;wiki&#39;): WikiStorage {
+  let db: IDBDatabase | null = null
+
+  const getDB = async (): Promise&lt;IDBDatabase&gt; =&gt; {
+    if (db) return db
+
+    return new Promise((resolve, reject) =&gt; {
+      const request = indexedDB.open(dbName, 1)
+
+      request.onerror = () =&gt; reject(request.error)
+      request.onsuccess = () =&gt; {
+        db = request.result
+        resolve(db)
+      }
+
+      request.onupgradeneeded = () =&gt; {
+        const database = request.result
+        database.createObjectStore(&#39;pages&#39;, { keyPath: &#39;id&#39; })
+      }
+    })
+  }
+
+  return {
+    async save(page: WikiPage) {
+      const database = await getDB()
+      return new Promise((resolve, reject) =&gt; {
+        const tx = database.transaction(&#39;pages&#39;, &#39;readwrite&#39;)
+        const store = tx.objectStore(&#39;pages&#39;)
+        const request = store.put({ ...page })
+        request.onsuccess = () =&gt; resolve()
+        request.onerror = () =&gt; reject(request.error)
+      })
+    },
+
+    async load(id: string) {
+      const database = await getDB()
+      return new Promise((resolve, reject) =&gt; {
+        const tx = database.transaction(&#39;pages&#39;, &#39;readonly&#39;)
+        const store = tx.objectStore(&#39;pages&#39;)
+        const request = store.get(id)
+        request.onsuccess = () =&gt; {
+          const page = request.result
+          if (page) {
+            page.created = new Date(page.created)
+            page.modified = new Date(page.modified)
+          }
+          resolve(page ?? null)
+        }
+        request.onerror = () =&gt; reject(request.error)
+      })
+    },
+
+    async delete(id: string) {
+      const database = await getDB()
+      return new Promise((resolve, reject) =&gt; {
+        const tx = database.transaction(&#39;pages&#39;, &#39;readwrite&#39;)
+        const store = tx.objectStore(&#39;pages&#39;)
+        const request = store.delete(id)
+        request.onsuccess = () =&gt; resolve()
+        request.onerror = () =&gt; reject(request.error)
+      })
+    },
+
+    async list() {
+      const database = await getDB()
+      return new Promise((resolve, reject) =&gt; {
+        const tx = database.transaction(&#39;pages&#39;, &#39;readonly&#39;)
+        const store = tx.objectStore(&#39;pages&#39;)
+        const request = store.getAll()
+        request.onsuccess = () =&gt; {
+          const pages = request.result.map((page: WikiPage) =&gt; ({
+            ...page,
+            created: new Date(page.created),
+            modified: new Date(page.modified)
+          }))
+          resolve(pages)
+        }
+        request.onerror = () =&gt; reject(request.error)
+      })
+    }
+  }
+}
+</code></pre>
+<h3>REST API Adapter</h3>
+<pre><code class="language-typescript">function restAPIStorage(baseUrl: string): WikiStorage {
+  return {
+    async save(page: WikiPage) {
+      await fetch(`${baseUrl}/pages/${page.id}`, {
+        method: &#39;PUT&#39;,
+        headers: { &#39;Content-Type&#39;: &#39;application/json&#39; },
+        body: JSON.stringify(page)
+      })
+    },
+
+    async load(id: string) {
+      const response = await fetch(`${baseUrl}/pages/${id}`)
+      if (!response.ok) return null
+
+      const page = await response.json()
+      page.created = new Date(page.created)
+      page.modified = new Date(page.modified)
+      return page
+    },
+
+    async delete(id: string) {
+      await fetch(`${baseUrl}/pages/${id}`, { method: &#39;DELETE&#39; })
+    },
+
+    async list() {
+      const response = await fetch(`${baseUrl}/pages`)
+      const pages = await response.json()
+
+      return pages.map((page: WikiPage) =&gt; ({
+        ...page,
+        created: new Date(page.created),
+        modified: new Date(page.modified)
+      }))
+    }
+  }
+}
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Dates Become Strings</h3>
+<p><strong>Symptom:</strong> After loading from storage, <code>page.created</code> is a string.</p>
+<p><strong>Cause:</strong> JSON serialization converts Dates to strings.</p>
+<p><strong>Solution:</strong> Always convert dates back in <code>load()</code> and <code>list()</code>:</p>
+<pre><code class="language-typescript">page.created = new Date(page.created)
+page.modified = new Date(page.modified)
+</code></pre>
+<h3>Storage Adapter Errors Silent</h3>
+<p><strong>Symptom:</strong> Storage operations fail silently.</p>
+<p><strong>Cause:</strong> Wiki operations catch storage errors.</p>
+<p><strong>Solution:</strong> Add logging to your adapter:</p>
+<pre><code class="language-typescript">async save(page: WikiPage) {
+  try {
+    // ... save logic
+  } catch (error) {
+    console.error(&#39;Storage save failed:&#39;, error)
+    throw error
+  }
+}
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-storage.html">Storage</a></strong> - Storage concepts</li>
+<li><strong><a href="guide-import-and-export.html">Import &amp; Export</a></strong> - Loading data on startup</li>
+<li><strong><a href="api-storage.html">Storage API</a></strong> - Interface reference</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

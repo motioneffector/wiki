@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import/Export API - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Import/Export API</h1>
+<p>Functions for exporting and importing wiki data.</p>
+<hr>
+<h2><code>wiki.export()</code></h2>
+<p>Exports all pages as an array.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">export(): WikiPage[]
+</code></pre>
+<p><strong>Returns:</strong> <code>WikiPage[]</code> — Copy of all pages with Date objects preserved</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">await wiki.createPage({ title: &#39;Home&#39;, content: &#39;Welcome&#39; })
+await wiki.createPage({ title: &#39;About&#39;, content: &#39;Info&#39; })
+
+const pages = wiki.export()
+console.log(pages.length) // 2
+
+// Dates are Date objects
+console.log(pages[0].created instanceof Date) // true
+
+// Returned array is a copy - modifying it doesn&#39;t affect wiki
+pages.pop()
+console.log(wiki.listPages().length) // Still 2
+</code></pre>
+<hr>
+<h2><code>wiki.import()</code></h2>
+<p>Imports pages into the wiki.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">import(pages: WikiPage[], options?: ImportOptions): Promise&lt;number&gt;
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pages</code></td>
+<td><code>WikiPage[]</code></td>
+<td>Yes</td>
+<td>Array of pages to import</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><code>ImportOptions</code></td>
+<td>No</td>
+<td>Import options</td>
+</tr>
+</tbody></table>
+<p><strong>ImportOptions:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mode</code></td>
+<td><code>&#39;replace&#39; | &#39;merge&#39; | &#39;skip&#39;</code></td>
+<td>Import strategy. Default: <code>&#39;replace&#39;</code></td>
+</tr>
+<tr>
+<td><code>emitEvents</code></td>
+<td><code>boolean</code></td>
+<td>Fire events for each import. Default: <code>false</code></td>
+</tr>
+</tbody></table>
+<p><strong>Import Modes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>replace</code></td>
+<td>Clear wiki first, then import all pages</td>
+</tr>
+<tr>
+<td><code>merge</code></td>
+<td>Keep existing pages, add new ones, overwrite same IDs</td>
+</tr>
+<tr>
+<td><code>skip</code></td>
+<td>Keep existing pages, only add pages with new IDs</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>Promise&lt;number&gt;</code> — Count of pages imported</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createWiki, type WikiPage } from &#39;@motioneffector/wiki&#39;
+
+const pages: WikiPage[] = [
+  {
+    id: &#39;home&#39;,
+    title: &#39;Home&#39;,
+    content: &#39;Welcome&#39;,
+    created: new Date(),
+    modified: new Date()
+  }
+]
+
+// Replace mode (default): clears existing pages
+const wiki = createWiki()
+await wiki.import(pages, { mode: &#39;replace&#39; })
+
+// Merge mode: keeps existing, overwrites conflicts
+await wiki.import(pages, { mode: &#39;merge&#39; })
+
+// Skip mode: keeps existing, only adds new IDs
+await wiki.import(pages, { mode: &#39;skip&#39; })
+
+// With events (for reactive updates)
+wiki.onChange(e =&gt; console.log(&#39;Imported:&#39;, e.page.title))
+await wiki.import(pages, { emitEvents: true })
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>Error</code> — If pages is not an array</li>
+<li><code>Error</code> — If any page is missing <code>id</code> field</li>
+<li><code>Error</code> — If any page is missing <code>title</code> field</li>
+</ul>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Validates all pages before importing any (atomic)</li>
+<li>Automatically converts ISO date strings to Date objects</li>
+<li>Rebuilds link indexes for all imported pages</li>
+</ul>
+<hr>
+<h2><code>wiki.toJSON()</code></h2>
+<p>Exports the wiki as a JSON string.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">toJSON(): string
+</code></pre>
+<p><strong>Returns:</strong> <code>string</code> — JSON representation of all pages</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">await wiki.createPage({ title: &#39;Home&#39;, content: &#39;Welcome&#39; })
+
+const json = wiki.toJSON()
+console.log(json)
+// [{&quot;id&quot;:&quot;home&quot;,&quot;title&quot;:&quot;Home&quot;,&quot;content&quot;:&quot;Welcome&quot;,&quot;created&quot;:&quot;2024-01-01T00:00:00.000Z&quot;,&quot;modified&quot;:&quot;2024-01-01T00:00:00.000Z&quot;}]
+
+// Save to file
+await fs.writeFile(&#39;backup.json&#39;, json)
+
+// Restore from file
+const data = await fs.readFile(&#39;backup.json&#39;, &#39;utf-8&#39;)
+const pages = JSON.parse(data)
+await newWiki.import(pages, { mode: &#39;replace&#39; })
+</code></pre>
+<p>Date objects are serialized as ISO strings. The <code>import()</code> method automatically converts them back to Date objects.</p>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

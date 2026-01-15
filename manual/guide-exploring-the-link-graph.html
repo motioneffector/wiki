@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exploring the Link Graph - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Exploring the Link Graph</h1>
+<p>Visualize and analyze how your wiki pages connect. This guide covers getting the full graph, exploring neighborhoods, and analyzing wiki structure.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="concept-bidirectional-links.html">Understand bidirectional links</a></li>
+<li>Have a wiki with interconnected pages</li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll explore the link graph by:</p>
+<ol>
+<li>Getting the full graph with <code>getGraph()</code></li>
+<li>Exploring neighborhoods with <code>getConnectedPages()</code></li>
+<li>Combining with orphans and dead links for analysis</li>
+</ol>
+<h2>Step 1: Get the Full Graph</h2>
+<p><code>getGraph()</code> returns an adjacency list of all page connections.</p>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+await wiki.createPage({
+  title: &#39;Home&#39;,
+  content: &#39;[[About]] | [[Projects]]&#39;
+})
+
+await wiki.createPage({
+  title: &#39;About&#39;,
+  content: &#39;Back to [[Home]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Projects&#39;,
+  content: &#39;[[Project A]] | [[Project B]]&#39;
+})
+
+const graph = wiki.getGraph()
+console.log(graph)
+// {
+//   &#39;home&#39;: [&#39;about&#39;, &#39;projects&#39;],
+//   &#39;about&#39;: [&#39;home&#39;],
+//   &#39;projects&#39;: [&#39;project-a&#39;, &#39;project-b&#39;]
+// }
+</code></pre>
+<p>The graph includes dead links (targets that don&#39;t exist as pages).</p>
+<h2>Step 2: Explore Neighborhoods</h2>
+<p><code>getConnectedPages()</code> finds pages within N links of a starting page.</p>
+<pre><code class="language-typescript">await wiki.createPage({ title: &#39;Project A&#39;, content: &#39;[[Team]]&#39; })
+await wiki.createPage({ title: &#39;Project B&#39;, content: &#39;&#39; })
+await wiki.createPage({ title: &#39;Team&#39;, content: &#39;[[Alice]] | [[Bob]]&#39; })
+await wiki.createPage({ title: &#39;Alice&#39;, content: &#39;&#39; })
+await wiki.createPage({ title: &#39;Bob&#39;, content: &#39;&#39; })
+
+// Depth 1: direct connections only
+const depth1 = wiki.getConnectedPages(&#39;projects&#39;, 1)
+console.log(depth1.map(p =&gt; p.title))
+// [&#39;Projects&#39;, &#39;Project A&#39;, &#39;Project B&#39;, &#39;Home&#39;]
+// Includes: outgoing links, backlinks, and self
+
+// Depth 2: connections of connections
+const depth2 = wiki.getConnectedPages(&#39;projects&#39;, 2)
+console.log(depth2.map(p =&gt; p.title))
+// [&#39;Projects&#39;, &#39;Project A&#39;, &#39;Project B&#39;, &#39;Home&#39;, &#39;Team&#39;, &#39;About&#39;]
+
+// Depth 0: just the page itself
+const depth0 = wiki.getConnectedPages(&#39;projects&#39;, 0)
+console.log(depth0.map(p =&gt; p.title))
+// [&#39;Projects&#39;]
+</code></pre>
+<h2>Step 3: Analyze Wiki Health</h2>
+<p>Combine graph tools to understand your wiki&#39;s structure.</p>
+<pre><code class="language-typescript">function analyzeWiki(wiki: Wiki) {
+  const pages = wiki.listPages()
+  const orphans = wiki.getOrphans()
+  const deadLinks = wiki.getDeadLinks()
+  const graph = wiki.getGraph()
+
+  // Count connections
+  const connectionCounts = pages.map(page =&gt; ({
+    title: page.title,
+    outgoing: wiki.getLinks(page.id).length,
+    incoming: wiki.getBacklinks(page.id).length,
+    total: wiki.getLinks(page.id).length + wiki.getBacklinks(page.id).length
+  }))
+
+  // Find most connected
+  const mostConnected = connectionCounts
+    .sort((a, b) =&gt; b.total - a.total)
+    .slice(0, 5)
+
+  // Find isolated clusters
+  // (pages that aren&#39;t connected to the main wiki)
+
+  return {
+    totalPages: pages.length,
+    totalLinks: Object.values(graph).flat().length,
+    orphanCount: orphans.length,
+    deadLinkCount: deadLinks.length,
+    averageConnections: connectionCounts.reduce((sum, c) =&gt; sum + c.total, 0) / pages.length,
+    mostConnected,
+    orphans: orphans.map(p =&gt; p.title),
+    missingPages: [...new Set(deadLinks.map(dl =&gt; dl.target))]
+  }
+}
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createWiki, type Wiki, type WikiPage } from &#39;@motioneffector/wiki&#39;
+
+async function main() {
+  const wiki = createWiki()
+
+  // Build a sample wiki
+  await wiki.createPage({
+    title: &#39;Main&#39;,
+    content: &#39;[[Characters]] | [[Locations]] | [[Plot]]&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Characters&#39;,
+    content: &#39;[[Alice]] | [[Bob]] | [[Villain]]&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Locations&#39;,
+    content: &#39;[[City]] | [[Forest]]&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Alice&#39;,
+    content: &#39;Lives in [[City]]. Friend of [[Bob]].&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Bob&#39;,
+    content: &#39;Lives in [[Forest]]. Friend of [[Alice]].&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;City&#39;,
+    content: &#39;Home of [[Alice]].&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Forest&#39;,
+    content: &#39;Home of [[Bob]]. Hides the [[Secret Cave]].&#39;
+  })
+
+  // An orphan page
+  await wiki.createPage({
+    title: &#39;Deleted Scene&#39;,
+    content: &#39;This was cut from the story.&#39;
+  })
+
+  // Analyze
+  console.log(&#39;=== Wiki Graph Analysis ===\n&#39;)
+
+  const graph = wiki.getGraph()
+  console.log(&#39;Adjacency List:&#39;)
+  for (const [pageId, links] of Object.entries(graph)) {
+    const page = wiki.getPage(pageId)
+    console.log(`  ${page?.title}: → ${links.join(&#39;, &#39;) || &#39;(none)&#39;}`)
+  }
+
+  console.log(&#39;\n--- Neighborhood of Alice (depth 2) ---&#39;)
+  const neighborhood = wiki.getConnectedPages(&#39;alice&#39;, 2)
+  for (const page of neighborhood) {
+    const depth = page.id === &#39;alice&#39; ? 0 :
+      wiki.getLinks(&#39;alice&#39;).map(l =&gt; wiki.resolveLink(l)).includes(page.id) ||
+      wiki.getBacklinks(&#39;alice&#39;).includes(page.id) ? 1 : 2
+    console.log(`  ${&#39;  &#39;.repeat(depth)}${page.title}`)
+  }
+
+  console.log(&#39;\n--- Health Report ---&#39;)
+  console.log(&#39;Orphans:&#39;, wiki.getOrphans().map(p =&gt; p.title))
+  console.log(&#39;Dead Links:&#39;, wiki.getDeadLinks().map(dl =&gt; dl.target))
+}
+
+main()
+</code></pre>
+<h2>Variations</h2>
+<h3>Building a Graph Visualization</h3>
+<pre><code class="language-typescript">function toGraphViz(wiki: Wiki): string {
+  const graph = wiki.getGraph()
+  let dot = &#39;digraph Wiki {\n&#39;
+  dot += &#39;  rankdir=LR;\n&#39;
+  dot += &#39;  node [shape=box];\n\n&#39;
+
+  for (const [sourceId, targets] of Object.entries(graph)) {
+    const source = wiki.getPage(sourceId)
+    for (const targetId of targets) {
+      const target = wiki.getPage(targetId)
+      const targetLabel = target?.title ?? `[${targetId}]`
+      dot += `  &quot;${source?.title}&quot; -&gt; &quot;${targetLabel}&quot;;\n`
+    }
+  }
+
+  // Style dead link targets
+  const deadTargets = new Set(wiki.getDeadLinks().map(dl =&gt; dl.target))
+  for (const target of deadTargets) {
+    dot += `  &quot;${target}&quot; [style=dashed, color=red];\n`
+  }
+
+  dot += &#39;}\n&#39;
+  return dot
+}
+
+// Output can be rendered with Graphviz tools
+console.log(toGraphViz(wiki))
+</code></pre>
+<h3>Finding Clusters</h3>
+<pre><code class="language-typescript">function findClusters(wiki: Wiki): WikiPage[][] {
+  const pages = wiki.listPages()
+  const visited = new Set&lt;string&gt;()
+  const clusters: WikiPage[][] = []
+
+  for (const page of pages) {
+    if (visited.has(page.id)) continue
+
+    // Get all connected pages at max depth
+    const cluster = wiki.getConnectedPages(page.id, 100)
+    for (const p of cluster) {
+      visited.add(p.id)
+    }
+
+    clusters.push(cluster)
+  }
+
+  return clusters.sort((a, b) =&gt; b.length - a.length)
+}
+
+const clusters = findClusters(wiki)
+console.log(`Found ${clusters.length} clusters:`)
+for (const [i, cluster] of clusters.entries()) {
+  console.log(`  Cluster ${i + 1}: ${cluster.length} pages`)
+  console.log(`    ${cluster.map(p =&gt; p.title).join(&#39;, &#39;)}`)
+}
+</code></pre>
+<h3>Path Finding</h3>
+<pre><code class="language-typescript">function findPath(wiki: Wiki, fromId: string, toId: string): string[] | null {
+  const visited = new Set&lt;string&gt;()
+  const queue: Array&lt;{ id: string; path: string[] }&gt; = [
+    { id: fromId, path: [fromId] }
+  ]
+
+  while (queue.length &gt; 0) {
+    const { id, path } = queue.shift()!
+
+    if (id === toId) return path
+    if (visited.has(id)) continue
+    visited.add(id)
+
+    // Try outgoing links
+    for (const linkText of wiki.getLinks(id)) {
+      const targetId = wiki.resolveLink(linkText)
+      if (!visited.has(targetId)) {
+        queue.push({ id: targetId, path: [...path, targetId] })
+      }
+    }
+
+    // Try backlinks
+    for (const backlinkId of wiki.getBacklinks(id)) {
+      if (!visited.has(backlinkId)) {
+        queue.push({ id: backlinkId, path: [...path, backlinkId] })
+      }
+    }
+  }
+
+  return null
+}
+
+const path = findPath(wiki, &#39;alice&#39;, &#39;forest&#39;)
+if (path) {
+  console.log(&#39;Path:&#39;, path.map(id =&gt; wiki.getPage(id)?.title).join(&#39; → &#39;))
+}
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Graph Shows Dead Links as Targets</h3>
+<p><strong>Symptom:</strong> Graph values include IDs that don&#39;t have their own keys.</p>
+<p><strong>Cause:</strong> The page links to something that doesn&#39;t exist (a dead link).</p>
+<p><strong>Solution:</strong> This is expected. Filter if you only want existing pages:</p>
+<pre><code class="language-typescript">const graph = wiki.getGraph()
+const existingOnly: Graph = {}
+for (const [source, targets] of Object.entries(graph)) {
+  existingOnly[source] = targets.filter(t =&gt; wiki.getPage(t) !== undefined)
+}
+</code></pre>
+<h3>getConnectedPages Returns Empty</h3>
+<p><strong>Symptom:</strong> <code>getConnectedPages()</code> returns empty array.</p>
+<p><strong>Cause:</strong> The page ID doesn&#39;t exist.</p>
+<p><strong>Solution:</strong> Verify the page exists first:</p>
+<pre><code class="language-typescript">const page = wiki.getPage(&#39;my-id&#39;)
+if (page) {
+  const connected = wiki.getConnectedPages(&#39;my-id&#39;)
+}
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-bidirectional-links.html">Bidirectional Links</a></strong> - How links are tracked</li>
+<li><strong><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></strong> - Finding disconnected content</li>
+<li><strong><a href="api-graph.html">Graph API</a></strong> - Full reference</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

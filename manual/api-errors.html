@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Errors Reference - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Errors Reference</h1>
+<p>Error classes thrown by the wiki library.</p>
+<hr>
+<h2><code>WikiError</code></h2>
+<p>Base error class for all wiki-related errors.</p>
+<pre><code class="language-typescript">class WikiError extends Error {
+  name: &#39;WikiError&#39;
+}
+</code></pre>
+<p>All wiki-specific errors extend this class, making it easy to catch any wiki error:</p>
+<pre><code class="language-typescript">try {
+  await wiki.createPage({ title: &#39;&#39; })
+} catch (error) {
+  if (error instanceof WikiError) {
+    console.log(&#39;Wiki error:&#39;, error.message)
+  }
+}
+</code></pre>
+<hr>
+<h2><code>ValidationError</code></h2>
+<p>Thrown when input validation fails.</p>
+<pre><code class="language-typescript">class ValidationError extends WikiError {
+  name: &#39;ValidationError&#39;
+  field?: string
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>message</code></td>
+<td><code>string</code></td>
+<td>Description of the validation failure</td>
+</tr>
+<tr>
+<td><code>field</code></td>
+<td><code>string?</code></td>
+<td>The field that failed validation (when applicable)</td>
+</tr>
+</tbody></table>
+<h3>When Thrown</h3>
+<p><strong>Title validation:</strong></p>
+<pre><code class="language-typescript">// Empty or missing title
+await wiki.createPage({ title: &#39;&#39; })
+// ValidationError: &quot;Title cannot be empty&quot;
+
+await wiki.createPage({ title: &#39;   &#39; })
+// ValidationError: &quot;Title cannot be empty&quot;
+
+await wiki.createPage({} as any)
+// ValidationError: &quot;Title is required&quot;
+</code></pre>
+<p><strong>Length limits:</strong></p>
+<pre><code class="language-typescript">// Title too long (max 1000 characters)
+await wiki.createPage({ title: &#39;x&#39;.repeat(1001) })
+// ValidationError: &quot;Title exceeds maximum length of 1000&quot;
+
+// Content too long (max 10MB)
+await wiki.createPage({ title: &#39;Test&#39;, content: &#39;x&#39;.repeat(10_000_001) })
+// ValidationError: &quot;Content exceeds maximum length of 10000000&quot;
+
+// Tag too long (max 100 characters)
+await wiki.createPage({ title: &#39;Test&#39;, tags: [&#39;x&#39;.repeat(101)] })
+// ValidationError: &quot;Tag exceeds maximum length of 100&quot;
+
+// Too many tags (max 100)
+await wiki.createPage({ title: &#39;Test&#39;, tags: Array(101).fill(&#39;tag&#39;) })
+// ValidationError: &quot;Tags array exceeds maximum count of 100&quot;
+</code></pre>
+<h3>Example</h3>
+<pre><code class="language-typescript">import { ValidationError } from &#39;@motioneffector/wiki&#39;
+
+try {
+  await wiki.createPage({ title: &#39;&#39; })
+} catch (error) {
+  if (error instanceof ValidationError) {
+    console.log(&#39;Validation failed:&#39;, error.message)
+    if (error.field) {
+      console.log(&#39;Field:&#39;, error.field)
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2><code>StorageError</code></h2>
+<p>Thrown when storage operations fail.</p>
+<pre><code class="language-typescript">class StorageError extends WikiError {
+  name: &#39;StorageError&#39;
+}
+</code></pre>
+<p>Typically thrown by custom storage adapters when persistence fails (network error, disk full, permission denied, etc.).</p>
+<h3>Example</h3>
+<pre><code class="language-typescript">import { StorageError } from &#39;@motioneffector/wiki&#39;
+
+try {
+  await wiki.createPage({ title: &#39;Test&#39; })
+} catch (error) {
+  if (error instanceof StorageError) {
+    console.log(&#39;Storage failed:&#39;, error.message)
+    // Retry logic, fallback, or user notification
+  }
+}
+</code></pre>
+<hr>
+<h2>Standard Errors</h2>
+<p>The library also throws standard JavaScript errors for certain conditions:</p>
+<h3><code>Error</code></h3>
+<pre><code class="language-typescript">// Page not found
+await wiki.updatePage(&#39;nonexistent&#39;, { title: &#39;New&#39; })
+// Error: &quot;Page &#39;nonexistent&#39; not found&quot;
+
+await wiki.deletePage(&#39;nonexistent&#39;)
+// Error: &quot;Page &#39;nonexistent&#39; not found&quot;
+
+await wiki.renamePage(&#39;nonexistent&#39;, &#39;New&#39;)
+// Error: &quot;Page &#39;nonexistent&#39; not found&quot;
+
+// Duplicate ID
+await wiki.createPage({ id: &#39;existing&#39;, title: &#39;First&#39; })
+await wiki.createPage({ id: &#39;existing&#39;, title: &#39;Second&#39; })
+// Error: &quot;Page with id &#39;existing&#39; already exists&quot;
+
+// Rename collision
+await wiki.createPage({ title: &#39;Target&#39; })
+await wiki.createPage({ title: &#39;Source&#39; })
+await wiki.renamePage(&#39;source&#39;, &#39;Target&#39;, { updateId: true })
+// Error: &quot;Page with id &#39;target&#39; already exists&quot;
+
+// Import validation
+await wiki.import([{ title: &#39;No ID&#39; }] as any)
+// Error: &quot;Each page must have an id field&quot;
+</code></pre>
+<h3><code>TypeError</code></h3>
+<pre><code class="language-typescript">// Invalid tags
+await wiki.createPage({ title: &#39;Test&#39;, tags: &#39;not-array&#39; as any })
+// TypeError: &quot;Tags must be an array&quot;
+
+await wiki.createPage({ title: &#39;Test&#39;, tags: [123] as any })
+// TypeError: &quot;Each tag must be a non-empty string&quot;
+
+await wiki.createPage({ title: &#39;Test&#39;, tags: [&#39;&#39;] })
+// TypeError: &quot;Each tag must be a non-empty string&quot;
+
+// Invalid type
+await wiki.createPage({ title: &#39;Test&#39;, type: 123 as any })
+// TypeError: &quot;Type must be a string&quot;
+
+// Invalid storage
+createWiki({ storage: { save: &#39;not a function&#39; } as any })
+// TypeError: &quot;Storage must implement WikiStorage interface&quot;
+
+// Invalid link pattern
+createWiki({ linkPattern: &#39;not a regex&#39; as any })
+// TypeError: &quot;linkPattern must be a RegExp&quot;
+</code></pre>
+<hr>
+<h2>Error Handling Patterns</h2>
+<h3>Catch All Wiki Errors</h3>
+<pre><code class="language-typescript">import { WikiError } from &#39;@motioneffector/wiki&#39;
+
+try {
+  await wiki.createPage({ title: &#39;&#39; })
+} catch (error) {
+  if (error instanceof WikiError) {
+    // Handle any wiki-specific error
+    showError(error.message)
+  } else {
+    // Unexpected error
+    throw error
+  }
+}
+</code></pre>
+<h3>Specific Error Handling</h3>
+<pre><code class="language-typescript">import { ValidationError, StorageError } from &#39;@motioneffector/wiki&#39;
+
+try {
+  await wiki.createPage(data)
+} catch (error) {
+  if (error instanceof ValidationError) {
+    showValidationError(error.message, error.field)
+  } else if (error instanceof StorageError) {
+    showStorageError(error.message)
+    offerRetry()
+  } else if (error instanceof Error) {
+    showGenericError(error.message)
+  }
+}
+</code></pre>
+<h3>Form Validation</h3>
+<pre><code class="language-typescript">async function savePage(data: CreatePageData) {
+  try {
+    return await wiki.createPage(data)
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return { error: error.message, field: error.field }
+    }
+    throw error
+  }
+}
+
+const result = await savePage({ title: &#39;&#39; })
+if (&#39;error&#39; in result) {
+  form.showError(result.error)
+}
+</code></pre>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

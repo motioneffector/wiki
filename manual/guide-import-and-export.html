@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import &amp; Export - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Import &amp; Export</h1>
+<p>Move wiki data between systems, create backups, or merge wikis. This guide covers exporting to JSON, importing with different modes, and handling data correctly.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li>Have a wiki with some pages (<a href="your-first-wiki.html">Your First Wiki</a>)</li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll import and export data by:</p>
+<ol>
+<li>Exporting pages with <code>export()</code> or <code>toJSON()</code></li>
+<li>Importing pages with <code>import()</code> using different modes</li>
+<li>Handling Date serialization correctly</li>
+</ol>
+<h2>Step 1: Export Your Wiki</h2>
+<p>Get all pages as an array or JSON string.</p>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+await wiki.createPage({
+  title: &#39;Home&#39;,
+  content: &#39;Welcome to [[About]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;About&#39;,
+  content: &#39;About this wiki.&#39;,
+  tags: [&#39;meta&#39;]
+})
+
+// Export as array of page objects
+const pages = wiki.export()
+console.log(pages.length) // 2
+
+// Export as JSON string (for saving to file)
+const json = wiki.toJSON()
+console.log(json)
+// [{&quot;id&quot;:&quot;home&quot;,&quot;title&quot;:&quot;Home&quot;,&quot;content&quot;:&quot;Welcome to [[About]].&quot;,&quot;created&quot;:&quot;2024-01-01T...&quot;,&quot;modified&quot;:&quot;2024-01-01T...&quot;},...]
+</code></pre>
+<p><code>export()</code> returns page objects with Date fields as Date objects. <code>toJSON()</code> returns a JSON string with dates serialized to ISO strings.</p>
+<h2>Step 2: Import Data</h2>
+<p>Load pages into a wiki using different import modes.</p>
+<pre><code class="language-typescript">import { createWiki, type WikiPage } from &#39;@motioneffector/wiki&#39;
+
+const newWiki = createWiki()
+
+const pagesToImport: WikiPage[] = [
+  {
+    id: &#39;home&#39;,
+    title: &#39;Home&#39;,
+    content: &#39;Welcome!&#39;,
+    created: new Date(),
+    modified: new Date()
+  },
+  {
+    id: &#39;about&#39;,
+    title: &#39;About&#39;,
+    content: &#39;About us.&#39;,
+    created: new Date(),
+    modified: new Date()
+  }
+]
+
+// Import with replace mode (default) - clears existing, adds new
+const count = await newWiki.import(pagesToImport, { mode: &#39;replace&#39; })
+console.log(`Imported ${count} pages`)
+</code></pre>
+<h3>Import Modes</h3>
+<pre><code class="language-typescript">// Replace: Clear wiki first, then import all
+await wiki.import(pages, { mode: &#39;replace&#39; })
+
+// Merge: Keep existing, add new, overwrite conflicts by ID
+await wiki.import(pages, { mode: &#39;merge&#39; })
+
+// Skip: Keep existing, only add pages with new IDs
+await wiki.import(pages, { mode: &#39;skip&#39; })
+</code></pre>
+<h2>Step 3: Handle JSON Serialization</h2>
+<p>When loading from JSON, dates come back as strings and need conversion.</p>
+<pre><code class="language-typescript">// Save to file
+const json = wiki.toJSON()
+await fs.writeFile(&#39;wiki-backup.json&#39;, json)
+
+// Load from file
+const loaded = await fs.readFile(&#39;wiki-backup.json&#39;, &#39;utf-8&#39;)
+const pages = JSON.parse(loaded)
+
+// Import handles date conversion automatically
+const newWiki = createWiki()
+await newWiki.import(pages, { mode: &#39;replace&#39; })
+
+// Dates are restored as Date objects
+const home = newWiki.getPage(&#39;home&#39;)
+console.log(home?.created instanceof Date) // true
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createWiki, type Wiki, type WikiPage } from &#39;@motioneffector/wiki&#39;
+
+async function main() {
+  // Create source wiki with content
+  const sourceWiki = createWiki()
+
+  await sourceWiki.createPage({
+    title: &#39;Characters&#39;,
+    content: &#39;Main: [[Hero]]. Villain: [[Shadow]].&#39;,
+    type: &#39;index&#39;
+  })
+
+  await sourceWiki.createPage({
+    title: &#39;Hero&#39;,
+    content: &#39;The protagonist.&#39;,
+    type: &#39;character&#39;,
+    tags: [&#39;protagonist&#39;]
+  })
+
+  await sourceWiki.createPage({
+    title: &#39;Shadow&#39;,
+    content: &#39;The antagonist.&#39;,
+    type: &#39;character&#39;,
+    tags: [&#39;antagonist&#39;]
+  })
+
+  // Export to JSON
+  const backup = sourceWiki.toJSON()
+  console.log(&#39;Backup created:&#39;, backup.length, &#39;bytes&#39;)
+
+  // Simulate sending to another system
+  const targetWiki = createWiki()
+
+  // Import the backup
+  const parsed = JSON.parse(backup)
+  const imported = await targetWiki.import(parsed, { mode: &#39;replace&#39; })
+  console.log(&#39;Imported:&#39;, imported, &#39;pages&#39;)
+
+  // Verify everything works
+  console.log(&#39;\nPages:&#39;, targetWiki.listPages().map(p =&gt; p.title))
+  console.log(&#39;Types:&#39;, targetWiki.getTypes())
+  console.log(&#39;Tags:&#39;, targetWiki.getTags())
+  console.log(&#39;Links from Characters:&#39;, targetWiki.getLinks(&#39;characters&#39;))
+}
+
+main()
+</code></pre>
+<h2>Variations</h2>
+<h3>Full Backup and Restore</h3>
+<pre><code class="language-typescript">import { writeFile, readFile } from &#39;fs/promises&#39;
+
+async function backupWiki(wiki: Wiki, path: string) {
+  const json = wiki.toJSON()
+  await writeFile(path, json, &#39;utf-8&#39;)
+  console.log(`Backed up ${wiki.listPages().length} pages to ${path}`)
+}
+
+async function restoreWiki(path: string): Promise&lt;Wiki&gt; {
+  const json = await readFile(path, &#39;utf-8&#39;)
+  const pages = JSON.parse(json)
+
+  const wiki = createWiki()
+  await wiki.import(pages, { mode: &#39;replace&#39; })
+
+  console.log(`Restored ${wiki.listPages().length} pages from ${path}`)
+  return wiki
+}
+
+// Usage
+await backupWiki(wiki, &#39;./backup.json&#39;)
+const restored = await restoreWiki(&#39;./backup.json&#39;)
+</code></pre>
+<h3>Merging Two Wikis</h3>
+<pre><code class="language-typescript">async function mergeWikis(target: Wiki, source: Wiki) {
+  const sourcePages = source.export()
+
+  // Merge mode: adds new pages, overwrites existing with same ID
+  const merged = await target.import(sourcePages, { mode: &#39;merge&#39; })
+
+  console.log(`Merged ${merged} pages into target wiki`)
+  console.log(`Target now has ${target.listPages().length} pages`)
+}
+</code></pre>
+<h3>Selective Import</h3>
+<pre><code class="language-typescript">async function importByType(target: Wiki, pages: WikiPage[], types: string[]) {
+  const filtered = pages.filter(p =&gt; p.type &amp;&amp; types.includes(p.type))
+
+  const count = await target.import(filtered, { mode: &#39;merge&#39; })
+  console.log(`Imported ${count} pages of types: ${types.join(&#39;, &#39;)}`)
+}
+
+// Only import characters
+const allPages = JSON.parse(backup)
+await importByType(newWiki, allPages, [&#39;character&#39;])
+</code></pre>
+<h3>Import with Events</h3>
+<pre><code class="language-typescript">// By default, import doesn&#39;t fire events (for performance)
+await wiki.import(pages, { mode: &#39;replace&#39;, emitEvents: false })
+
+// Enable events if you need them
+wiki.onChange((event) =&gt; {
+  console.log(`${event.type}: ${event.page.title}`)
+})
+
+await wiki.import(pages, { mode: &#39;replace&#39;, emitEvents: true })
+// Console: &quot;create: Home&quot;, &quot;create: About&quot;, etc.
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Dates Are Strings After Import</h3>
+<p><strong>Symptom:</strong> <code>page.created</code> is a string instead of a Date.</p>
+<p><strong>Cause:</strong> This shouldn&#39;t happen - import automatically converts ISO strings to Dates.</p>
+<p><strong>Solution:</strong> Verify you&#39;re using <code>import()</code> not manual assignment:</p>
+<pre><code class="language-typescript">// Wrong
+const pages = JSON.parse(json)
+for (const page of pages) {
+  // Manual assignment doesn&#39;t convert dates
+}
+
+// Right
+await wiki.import(JSON.parse(json), { mode: &#39;replace&#39; })
+</code></pre>
+<h3>Links Not Working After Import</h3>
+<p><strong>Symptom:</strong> <code>getLinks()</code> or <code>getBacklinks()</code> return empty after import.</p>
+<p><strong>Cause:</strong> This shouldn&#39;t happen - import rebuilds all link indexes.</p>
+<p><strong>Solution:</strong> Verify the import completed:</p>
+<pre><code class="language-typescript">const count = await wiki.import(pages, { mode: &#39;replace&#39; })
+console.log(`Imported ${count} pages`)
+console.log(`Links indexed: ${wiki.listPages().flatMap(p =&gt; wiki.getLinks(p.id)).length}`)
+</code></pre>
+<h3>Import Validation Errors</h3>
+<p><strong>Symptom:</strong> Import throws &quot;Each page must have an id/title field&quot;.</p>
+<p><strong>Cause:</strong> The page objects are missing required fields.</p>
+<p><strong>Solution:</strong> Ensure all pages have at minimum <code>id</code>, <code>title</code>, <code>content</code>, <code>created</code>, <code>modified</code>:</p>
+<pre><code class="language-typescript">const validPage: WikiPage = {
+  id: &#39;my-page&#39;,
+  title: &#39;My Page&#39;,
+  content: &#39;Content here&#39;,
+  created: new Date(),
+  modified: new Date()
+}
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-storage.html">Storage</a></strong> - Understanding persistence</li>
+<li><strong><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></strong> - Building persistent backends</li>
+<li><strong><a href="api-import-export.html">Import/Export API</a></strong> - Full reference</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
