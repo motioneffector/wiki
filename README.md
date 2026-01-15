@@ -19,7 +19,7 @@ A TypeScript library for creating interconnected knowledge bases with bidirectio
 - **Import/Export** - Portable JSON format for data management
 - **Zero Dependencies** - Lightweight with no external runtime dependencies
 
-[Read the full manual →](https://github.com/motioneffector/wiki#readme)
+[Read the full manual →](https://motioneffector.github.io/wiki/manual/)
 
 ## Quick Start
 
