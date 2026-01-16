@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Core API - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Core API</h1>
+<p>Core functions for creating wikis and managing pages.</p>
+<hr>
+<h2><code>createWiki()</code></h2>
+<p>Creates a new wiki instance.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function createWiki(options?: WikiOptions): Wiki
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>options</code></td>
+<td><code>WikiOptions</code></td>
+<td>No</td>
+<td>Configuration options</td>
+</tr>
+</tbody></table>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>storage</code></td>
+<td><code>WikiStorage</code></td>
+<td>Custom storage adapter. Default: <code>memoryStorage()</code></td>
+</tr>
+<tr>
+<td><code>linkPattern</code></td>
+<td><code>RegExp</code></td>
+<td>Custom link syntax regex. Default: `/[[([^]</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>Wiki</code> — A new wiki instance</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createWiki, memoryStorage } from &#39;@motioneffector/wiki&#39;
+
+// Default configuration
+const wiki = createWiki()
+
+// With custom storage
+const wiki = createWiki({ storage: myStorage })
+
+// With custom link pattern (e.g., {{link}} instead of [[link]])
+const wiki = createWiki({ linkPattern: /\{\{([^}]+)\}\}/g })
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>TypeError</code> — If storage doesn&#39;t implement WikiStorage interface</li>
+<li><code>TypeError</code> — If linkPattern is not a RegExp</li>
+<li><code>Error</code> — If linkPattern has no capture group</li>
+</ul>
+<hr>
+<h2><code>wiki.createPage()</code></h2>
+<p>Creates a new page in the wiki.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">createPage(data: CreatePageData): Promise&lt;WikiPage&gt;
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>data</code></td>
+<td><code>CreatePageData</code></td>
+<td>Yes</td>
+<td>Page data</td>
+</tr>
+</tbody></table>
+<p><strong>CreatePageData:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>title</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Page title (cannot be empty)</td>
+</tr>
+<tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>Custom page ID. Default: slugified title</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>Page content. Default: <code>&#39;&#39;</code></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>Page type category</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>string[]</code></td>
+<td>No</td>
+<td>Array of tags</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>Promise&lt;WikiPage&gt;</code> — The created page with generated fields</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">// Minimal
+const page = await wiki.createPage({ title: &#39;Home&#39; })
+
+// Full options
+const page = await wiki.createPage({
+  title: &#39;King Aldric&#39;,
+  content: &#39;Ruler of [[Valdoria]].&#39;,
+  type: &#39;person&#39;,
+  tags: [&#39;royalty&#39;, &#39;protagonist&#39;]
+})
+
+// Custom ID
+const page = await wiki.createPage({
+  id: &#39;aldric-the-great&#39;,
+  title: &#39;King Aldric&#39;
+})
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — If title is missing, empty, or whitespace-only</li>
+<li><code>Error</code> — If a page with the given ID already exists</li>
+<li><code>TypeError</code> — If tags is not an array or contains non-strings</li>
+</ul>
+<hr>
+<h2><code>wiki.getPage()</code></h2>
+<p>Retrieves a page by ID.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getPage(id: string): WikiPage | undefined
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The page ID</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>WikiPage | undefined</code> — The page if found, undefined otherwise</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">const page = wiki.getPage(&#39;king-aldric&#39;)
+if (page) {
+  console.log(page.title)
+}
+</code></pre>
+<hr>
+<h2><code>wiki.getPageByTitle()</code></h2>
+<p>Retrieves a page by its title.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">getPageByTitle(title: string, options?: GetPageByTitleOptions): WikiPage | undefined
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>title</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The exact page title</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><code>GetPageByTitleOptions</code></td>
+<td>No</td>
+<td>Lookup options</td>
+</tr>
+</tbody></table>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ignoreCase</code></td>
+<td><code>boolean</code></td>
+<td>Match case-insensitively. Default: <code>false</code></td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>WikiPage | undefined</code> — The page if found, undefined otherwise</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">// Exact match
+const page = wiki.getPageByTitle(&#39;King Aldric&#39;)
+
+// Case-insensitive
+const page = wiki.getPageByTitle(&#39;king aldric&#39;, { ignoreCase: true })
+</code></pre>
+<hr>
+<h2><code>wiki.updatePage()</code></h2>
+<p>Updates an existing page.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">updatePage(id: string, data: UpdatePageData): Promise&lt;WikiPage&gt;
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The page ID to update</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td><code>UpdatePageData</code></td>
+<td>Yes</td>
+<td>Fields to update</td>
+</tr>
+</tbody></table>
+<p><strong>UpdatePageData:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>title</code></td>
+<td><code>string</code></td>
+<td>New title</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td><code>string</code></td>
+<td>New content (re-extracts links)</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>string | undefined</code></td>
+<td>New type, or undefined to remove</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>string[] | undefined</code></td>
+<td>New tags, or undefined to remove</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>Promise&lt;WikiPage&gt;</code> — The updated page</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">// Update content
+await wiki.updatePage(&#39;king-aldric&#39;, {
+  content: &#39;Former ruler of [[Valdoria]].&#39;
+})
+
+// Update multiple fields
+await wiki.updatePage(&#39;king-aldric&#39;, {
+  title: &#39;King Aldric the Great&#39;,
+  type: &#39;historical-figure&#39;,
+  tags: [&#39;royalty&#39;, &#39;deceased&#39;]
+})
+
+// Remove type
+await wiki.updatePage(&#39;king-aldric&#39;, { type: undefined })
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>Error</code> — If page not found</li>
+<li><code>ValidationError</code> — If title is empty</li>
+</ul>
+<hr>
+<h2><code>wiki.deletePage()</code></h2>
+<p>Deletes a page from the wiki.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">deletePage(id: string, options?: DeletePageOptions): Promise&lt;void&gt;
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The page ID to delete</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><code>DeletePageOptions</code></td>
+<td>No</td>
+<td>Deletion options</td>
+</tr>
+</tbody></table>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>updateLinks</code></td>
+<td><code>boolean</code></td>
+<td>Update link indexes. Default: <code>true</code></td>
+</tr>
+</tbody></table>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">await wiki.deletePage(&#39;old-page&#39;)
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>Error</code> — If page not found</li>
+</ul>
+<hr>
+<h2><code>wiki.renamePage()</code></h2>
+<p>Changes a page&#39;s title, optionally updating its ID.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">renamePage(id: string, newTitle: string, options?: RenamePageOptions): Promise&lt;WikiPage&gt;
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Current page ID</td>
+</tr>
+<tr>
+<td><code>newTitle</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>New title</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><code>RenamePageOptions</code></td>
+<td>No</td>
+<td>Rename options</td>
+</tr>
+</tbody></table>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>updateId</code></td>
+<td><code>boolean</code></td>
+<td>Also change ID to slugified new title. Default: <code>false</code></td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>Promise&lt;WikiPage&gt;</code> — The renamed page</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">// Rename title only (keeps same ID)
+await wiki.renamePage(&#39;king-aldric&#39;, &#39;King Aldric II&#39;)
+
+// Rename title and ID (also updates links in other pages!)
+await wiki.renamePage(&#39;king-aldric&#39;, &#39;King Aldric II&#39;, { updateId: true })
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>Error</code> — If page not found</li>
+<li><code>Error</code> — If title is empty</li>
+<li><code>Error</code> — If <code>updateId: true</code> and new ID already exists</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

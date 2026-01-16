@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your First Wiki - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Your First Wiki</h1>
+<p>Build a working wiki with interconnected pages in about 5 minutes.</p>
+<p>By the end of this guide, you&#39;ll have a wiki with three pages, links between them, and you&#39;ll know how to query backlinks and detect dead links.</p>
+<h2>What We&#39;re Building</h2>
+<p>A small knowledge base with a Home page linking to two other pages. We&#39;ll see how the library automatically tracks these relationships and helps find broken links.</p>
+<h2>Step 1: Create a Wiki Instance</h2>
+<p>First, import and create a wiki. The default configuration stores everything in memory.</p>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+</code></pre>
+<p>The wiki starts empty. All operations for creating and querying pages go through this instance.</p>
+<h2>Step 2: Create Your First Page</h2>
+<p>Create a Home page with links to other pages using <code>[[wikilink]]</code> syntax.</p>
+<pre><code class="language-typescript">await wiki.createPage({
+  title: &#39;Home&#39;,
+  content: `
+    Welcome to my wiki!
+
+    Check out [[About]] for more information,
+    or jump to [[Projects]] to see what I&#39;m working on.
+  `
+})
+</code></pre>
+<p>The library automatically extracts <code>About</code> and <code>Projects</code> as links from this content. Note that these pages don&#39;t exist yet - that&#39;s fine, they become &quot;dead links&quot; we can query.</p>
+<h2>Step 3: Create Linked Pages</h2>
+<p>Now create the pages that Home links to.</p>
+<pre><code class="language-typescript">await wiki.createPage({
+  title: &#39;About&#39;,
+  content: &#39;This wiki is about my work. Back to [[Home]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Projects&#39;,
+  content: &#39;Current projects: [[Project Alpha]]. See also [[About]].&#39;
+})
+</code></pre>
+<p>Each page can link to any other page, including pages that don&#39;t exist yet.</p>
+<h2>Step 4: Query Backlinks</h2>
+<p>Find out what pages link to a specific page.</p>
+<pre><code class="language-typescript">// Get the About page
+const aboutPage = wiki.getPageByTitle(&#39;About&#39;)
+
+// What links to About?
+const backlinks = wiki.getBacklinks(aboutPage.id)
+console.log(backlinks)
+// Output: [&#39;home&#39;, &#39;projects&#39;]
+
+// Get full page objects instead of just IDs
+const backlinkPages = wiki.getBacklinkPages(aboutPage.id)
+console.log(backlinkPages.map(p =&gt; p.title))
+// Output: [&#39;Home&#39;, &#39;Projects&#39;]
+</code></pre>
+<p>Backlinks update automatically when you create, update, or delete pages.</p>
+<h2>Step 5: Find Dead Links</h2>
+<p>Dead links point to pages that don&#39;t exist. Find them across your entire wiki.</p>
+<pre><code class="language-typescript">const deadLinks = wiki.getDeadLinks()
+console.log(deadLinks)
+// Output: [{ source: &#39;projects&#39;, target: &#39;Project Alpha&#39; }]
+</code></pre>
+<p>The <code>Projects</code> page links to <code>[[Project Alpha]]</code>, but we never created that page. You can fix this by creating the missing page:</p>
+<pre><code class="language-typescript">await wiki.createPage({
+  title: &#39;Project Alpha&#39;,
+  content: &#39;My first project. Part of [[Projects]].&#39;
+})
+
+// Dead links is now empty
+console.log(wiki.getDeadLinks())
+// Output: []
+</code></pre>
+<h2>The Complete Code</h2>
+<p>Here&#39;s everything together:</p>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+// Create interconnected pages
+await wiki.createPage({
+  title: &#39;Home&#39;,
+  content: `
+    Welcome to my wiki!
+    Check out [[About]] for more information,
+    or jump to [[Projects]] to see what I&#39;m working on.
+  `
+})
+
+await wiki.createPage({
+  title: &#39;About&#39;,
+  content: &#39;This wiki is about my work. Back to [[Home]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Projects&#39;,
+  content: &#39;Current projects: [[Project Alpha]]. See also [[About]].&#39;
+})
+
+// Query relationships
+const aboutPage = wiki.getPageByTitle(&#39;About&#39;)
+const backlinks = wiki.getBacklinks(aboutPage.id)
+console.log(&#39;What links to About:&#39;, backlinks)
+
+// Find broken links
+const deadLinks = wiki.getDeadLinks()
+console.log(&#39;Dead links:&#39;, deadLinks)
+
+// Fix the dead link
+await wiki.createPage({
+  title: &#39;Project Alpha&#39;,
+  content: &#39;My first project. Part of [[Projects]].&#39;
+})
+
+console.log(&#39;Dead links after fix:&#39;, wiki.getDeadLinks())
+</code></pre>
+<h2>What&#39;s Next?</h2>
+<p>Now that you have the basics:</p>
+<ul>
+<li><strong><a href="concept-pages-and-links.html">Understand pages and links deeper</a></strong> - Learn about IDs, link syntax, and how extraction works</li>
+<li><strong><a href="guide-working-with-backlinks.html">Work with backlinks</a></strong> - Build &quot;what links here&quot; features</li>
+<li><strong><a href="guide-managing-dead-links.html">Manage dead links</a></strong> - Keep your wiki healthy</li>
+<li><strong><a href="api-core.html">Explore the API</a></strong> - Full reference when you need details</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

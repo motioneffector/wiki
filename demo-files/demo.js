@@ -1,14 +1,9 @@
-// ============================================
-// DEMO LOGIC
-// ============================================
-
-// Check that the library is loaded
-if (!window.Library || !window.Library.createWiki) {
-  throw new Error('Wiki library not loaded. Make sure library.js is included before demo.js');
-}
+// Import library and expose globally for tests
+import * as Library from '../dist/index.js'
+window.Library = Library
 
 // Create wiki instance
-const { createWiki } = window.Library;
+const { createWiki } = Library;
 
 // ============================================
 // INITIAL DATA

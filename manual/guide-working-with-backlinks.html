@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Working with Backlinks - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Working with Backlinks</h1>
+<p>Backlinks show you what pages link to a specific page. This guide covers how to query backlinks and build features like &quot;What links here&quot; navigation.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="concept-pages-and-links.html">Understand pages and links</a></li>
+<li><a href="concept-bidirectional-links.html">Understand bidirectional linking</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll query backlinks by:</p>
+<ol>
+<li>Getting a page&#39;s ID</li>
+<li>Calling <code>getBacklinks()</code> or <code>getBacklinkPages()</code></li>
+<li>Using the results for navigation or analysis</li>
+</ol>
+<h2>Step 1: Get the Target Page</h2>
+<p>You need the page ID to query backlinks. Get it from the page object or by title lookup.</p>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+// If you have the page object
+const page = await wiki.createPage({ title: &#39;Hero&#39; })
+const pageId = page.id // &#39;hero&#39;
+
+// If you only have the title
+const found = wiki.getPageByTitle(&#39;Hero&#39;)
+const pageId = found?.id // &#39;hero&#39;
+
+// If you only have link text
+const pageId = wiki.resolveLink(&#39;Hero&#39;) // &#39;hero&#39;
+</code></pre>
+<h2>Step 2: Query Backlinks</h2>
+<p>Use <code>getBacklinks()</code> for just IDs, or <code>getBacklinkPages()</code> for full page objects.</p>
+<pre><code class="language-typescript">// Setup: create pages with links
+await wiki.createPage({
+  title: &#39;Story&#39;,
+  content: &#39;The [[Hero]] saves the day.&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Characters&#39;,
+  content: &#39;Main character: [[Hero]]. Sidekick: [[Companion]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Hero&#39;,
+  content: &#39;The protagonist.&#39;
+})
+
+// Query: what links to Hero?
+const backlinkIds = wiki.getBacklinks(&#39;hero&#39;)
+console.log(backlinkIds)
+// [&#39;story&#39;, &#39;characters&#39;]
+
+// Get full page objects
+const backlinkPages = wiki.getBacklinkPages(&#39;hero&#39;)
+console.log(backlinkPages.map(p =&gt; p.title))
+// [&#39;Story&#39;, &#39;Characters&#39;]
+</code></pre>
+<h2>Step 3: Use the Results</h2>
+<p>Common uses for backlink data:</p>
+<pre><code class="language-typescript">// Build a &quot;What links here&quot; list
+function whatLinksHere(wiki: Wiki, pageId: string) {
+  return wiki.getBacklinkPages(pageId).map(page =&gt; ({
+    title: page.title,
+    url: `/wiki/${page.id}`
+  }))
+}
+
+// Count incoming links (popularity)
+function getLinkCount(wiki: Wiki, pageId: string) {
+  return wiki.getBacklinks(pageId).length
+}
+
+// Check if a page is referenced
+function isReferenced(wiki: Wiki, pageId: string) {
+  return wiki.getBacklinks(pageId).length &gt; 0
+}
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createWiki, type Wiki, type WikiPage } from &#39;@motioneffector/wiki&#39;
+
+async function main() {
+  const wiki = createWiki()
+
+  // Create a small wiki
+  await wiki.createPage({
+    title: &#39;Index&#39;,
+    content: &#39;Welcome! See [[Characters]] and [[Locations]].&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Characters&#39;,
+    content: &#39;[[Alice]] is the hero. [[Bob]] is the mentor.&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Alice&#39;,
+    content: &#39;Main character. Lives in [[Hometown]].&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Locations&#39;,
+    content: &#39;[[Hometown]] is where it all begins.&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Hometown&#39;,
+    content: &#39;A small village. Home of [[Alice]].&#39;
+  })
+
+  // What links to Alice?
+  const aliceBacklinks = wiki.getBacklinkPages(&#39;alice&#39;)
+  console.log(&#39;\nPages linking to Alice:&#39;)
+  for (const page of aliceBacklinks) {
+    console.log(`  - ${page.title}`)
+  }
+  // Characters, Hometown
+
+  // What links to Hometown?
+  const hometownBacklinks = wiki.getBacklinkPages(&#39;hometown&#39;)
+  console.log(&#39;\nPages linking to Hometown:&#39;)
+  for (const page of hometownBacklinks) {
+    console.log(`  - ${page.title}`)
+  }
+  // Alice, Locations
+}
+
+main()
+</code></pre>
+<h2>Variations</h2>
+<h3>Finding Most-Linked Pages</h3>
+<pre><code class="language-typescript">function getMostLinkedPages(wiki: Wiki, limit = 10) {
+  const pages = wiki.listPages()
+
+  return pages
+    .map(page =&gt; ({
+      page,
+      backlinkCount: wiki.getBacklinks(page.id).length
+    }))
+    .sort((a, b) =&gt; b.backlinkCount - a.backlinkCount)
+    .slice(0, limit)
+}
+
+const popular = getMostLinkedPages(wiki, 5)
+for (const { page, backlinkCount } of popular) {
+  console.log(`${page.title}: ${backlinkCount} incoming links`)
+}
+</code></pre>
+<h3>Building Related Pages</h3>
+<pre><code class="language-typescript">function getRelatedPages(wiki: Wiki, pageId: string) {
+  const related = new Set&lt;string&gt;()
+
+  // Pages this one links to
+  for (const linked of wiki.getLinkedPages(pageId)) {
+    related.add(linked.id)
+  }
+
+  // Pages that link to this one
+  for (const backlink of wiki.getBacklinkPages(pageId)) {
+    related.add(backlink.id)
+  }
+
+  // Remove self
+  related.delete(pageId)
+
+  return [...related].map(id =&gt; wiki.getPage(id)!).filter(Boolean)
+}
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Backlinks Not Appearing</h3>
+<p><strong>Symptom:</strong> <code>getBacklinks()</code> returns empty array even though pages link to it.</p>
+<p><strong>Cause:</strong> The linking page&#39;s content doesn&#39;t match the target page&#39;s ID when slugified.</p>
+<p><strong>Solution:</strong> Check that <code>[[Link Text]]</code> slugifies to the target ID:</p>
+<pre><code class="language-typescript">const targetId = wiki.resolveLink(&#39;Link Text&#39;)
+console.log(targetId) // Should match your target page&#39;s ID
+</code></pre>
+<h3>Backlinks Include Deleted Pages</h3>
+<p><strong>Symptom:</strong> Backlink IDs reference pages that no longer exist.</p>
+<p><strong>Cause:</strong> This shouldn&#39;t happen - backlinks are cleaned up on delete. If it does, it&#39;s a bug.</p>
+<p><strong>Solution:</strong> Filter results to existing pages:</p>
+<pre><code class="language-typescript">const existingBacklinks = wiki.getBacklinks(pageId)
+  .filter(id =&gt; wiki.getPage(id) !== undefined)
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-bidirectional-links.html">Bidirectional Links</a></strong> - How the backlink index works</li>
+<li><strong><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></strong> - Deeper graph analysis</li>
+<li><strong><a href="api-links.html">Links API</a></strong> - Full reference for link methods</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

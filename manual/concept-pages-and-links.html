@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pages &amp; Links - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Pages &amp; Links</h1>
+<p>Pages are the fundamental unit of content in a wiki. Each page has a title, content, and automatic link extraction. When you write <code>[[Page Title]]</code> in your content, the library detects and tracks these links.</p>
+<h2>How It Works</h2>
+<p>A page is a document with these properties:</p>
+<ul>
+<li><strong>id</strong> - Unique identifier, auto-generated from title (slugified)</li>
+<li><strong>title</strong> - The display name</li>
+<li><strong>content</strong> - Text that can contain <code>[[wikilinks]]</code></li>
+<li><strong>type</strong> - Optional category (e.g., &quot;person&quot;, &quot;place&quot;)</li>
+<li><strong>tags</strong> - Optional array of tags</li>
+<li><strong>created</strong> / <strong>modified</strong> - Timestamps</li>
+</ul>
+<p>When you create or update a page, the library scans the content for <code>[[wikilinks]]</code> and builds an index of relationships. This happens automatically - you just write content.</p>
+<h2>Basic Usage</h2>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+// Create a page - ID is auto-generated from title
+const page = await wiki.createPage({
+  title: &#39;King Aldric&#39;,
+  content: &#39;Ruler of [[Valdoria]]. Father of [[Prince Aldric II]].&#39;,
+  type: &#39;person&#39;,
+  tags: [&#39;royalty&#39;, &#39;protagonist&#39;]
+})
+
+console.log(page.id)      // &#39;king-aldric&#39;
+console.log(page.created) // Date object
+</code></pre>
+<p>The links <code>[[Valdoria]]</code> and <code>[[Prince Aldric II]]</code> are automatically extracted and indexed.</p>
+<h2>Key Points</h2>
+<ul>
+<li><p><strong>IDs are slugified titles</strong> - &quot;King Aldric I&quot; becomes &quot;king-aldric-i&quot;. Spaces become hyphens, special characters are removed, diacritics are normalized (Café → cafe).</p>
+</li>
+<li><p><strong>You can provide custom IDs</strong> - Pass <code>id</code> in the create data if you need a specific identifier:</p>
+<pre><code class="language-typescript">await wiki.createPage({
+  id: &#39;aldric-the-great&#39;,
+  title: &#39;King Aldric&#39;,
+  content: &#39;...&#39;
+})
+</code></pre>
+</li>
+<li><p><strong>Links can have display text</strong> - Use <code>[[Page Title|display text]]</code> to show different text than the page title:</p>
+<pre><code class="language-typescript">content: &#39;See [[King Aldric|the king]] for details.&#39;
+// Links to &quot;King Aldric&quot; but displays &quot;the king&quot;
+</code></pre>
+</li>
+<li><p><strong>Code blocks are ignored</strong> - Links inside fenced code blocks (<code> </code>) or inline code (`) are not extracted. This prevents documentation examples from creating false links.</p>
+</li>
+</ul>
+<h2>Examples</h2>
+<h3>Retrieving Pages</h3>
+<pre><code class="language-typescript">// By ID
+const page = wiki.getPage(&#39;king-aldric&#39;)
+
+// By title (exact match)
+const page = wiki.getPageByTitle(&#39;King Aldric&#39;)
+
+// By title (case-insensitive)
+const page = wiki.getPageByTitle(&#39;king aldric&#39;, { ignoreCase: true })
+</code></pre>
+<h3>Updating Pages</h3>
+<pre><code class="language-typescript">// Update content - links are re-extracted automatically
+await wiki.updatePage(&#39;king-aldric&#39;, {
+  content: &#39;Now links to [[New Character]] instead.&#39;
+})
+
+// Update other fields
+await wiki.updatePage(&#39;king-aldric&#39;, {
+  type: &#39;historical-figure&#39;,
+  tags: [&#39;deceased&#39;, &#39;royalty&#39;]
+})
+</code></pre>
+<h3>Renaming Pages</h3>
+<pre><code class="language-typescript">// Rename title only (keeps same ID)
+await wiki.renamePage(&#39;king-aldric&#39;, &#39;King Aldric the Great&#39;)
+
+// Rename and update ID (also updates links in other pages!)
+await wiki.renamePage(&#39;king-aldric&#39;, &#39;King Aldric the Great&#39;, { updateId: true })
+</code></pre>
+<h2>Related</h2>
+<ul>
+<li><strong><a href="concept-bidirectional-links.html">Bidirectional Links</a></strong> - How the library tracks links in both directions</li>
+<li><strong><a href="your-first-wiki.html">Your First Wiki</a></strong> - Hands-on tutorial creating pages</li>
+<li><strong><a href="api-core.html">Core API</a></strong> - Full reference for page operations</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

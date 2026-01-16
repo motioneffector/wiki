@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizing with Types and Tags - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Organizing with Types and Tags</h1>
+<p>Use types and tags to categorize your pages for better organization and navigation. Types provide single categorization, tags allow multiple.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li>Have a basic wiki set up (<a href="your-first-wiki.html">Your First Wiki</a>)</li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll organize pages by:</p>
+<ol>
+<li>Assigning types when creating pages</li>
+<li>Adding tags for flexible categorization</li>
+<li>Querying pages by type and tag</li>
+</ol>
+<h2>Step 1: Assign Types</h2>
+<p>Types are single-value categories like &quot;person&quot;, &quot;place&quot;, or &quot;item&quot;. Each page can have one type.</p>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+await wiki.createPage({
+  title: &#39;King Aldric&#39;,
+  content: &#39;The wise ruler.&#39;,
+  type: &#39;person&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Castle Valdor&#39;,
+  content: &#39;The royal fortress.&#39;,
+  type: &#39;place&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Crown of Ages&#39;,
+  content: &#39;An ancient artifact.&#39;,
+  type: &#39;item&#39;
+})
+</code></pre>
+<p>Types are free-form strings - use whatever categories make sense for your wiki.</p>
+<h2>Step 2: Add Tags</h2>
+<p>Tags allow multiple categories per page. Use them for cross-cutting concerns.</p>
+<pre><code class="language-typescript">await wiki.createPage({
+  title: &#39;King Aldric&#39;,
+  content: &#39;The wise ruler.&#39;,
+  type: &#39;person&#39;,
+  tags: [&#39;royalty&#39;, &#39;protagonist&#39;, &#39;chapter-1&#39;]
+})
+
+await wiki.createPage({
+  title: &#39;Queen Isolde&#39;,
+  content: &#39;The beloved queen.&#39;,
+  type: &#39;person&#39;,
+  tags: [&#39;royalty&#39;, &#39;chapter-2&#39;, &#39;deceased&#39;]
+})
+
+await wiki.createPage({
+  title: &#39;Castle Valdor&#39;,
+  content: &#39;The royal fortress.&#39;,
+  type: &#39;place&#39;,
+  tags: [&#39;royalty&#39;, &#39;chapter-1&#39;, &#39;chapter-3&#39;]
+})
+</code></pre>
+<h2>Step 3: Query by Type and Tag</h2>
+<p>Find pages using their categorization.</p>
+<pre><code class="language-typescript">// Get all types in use
+const types = wiki.getTypes()
+console.log(types)
+// [&#39;item&#39;, &#39;person&#39;, &#39;place&#39;]
+
+// Get all people
+const people = wiki.getPagesByType(&#39;person&#39;)
+console.log(people.map(p =&gt; p.title))
+// [&#39;King Aldric&#39;, &#39;Queen Isolde&#39;]
+
+// Get all tags in use
+const tags = wiki.getTags()
+console.log(tags)
+// [&#39;chapter-1&#39;, &#39;chapter-2&#39;, &#39;chapter-3&#39;, &#39;deceased&#39;, &#39;protagonist&#39;, &#39;royalty&#39;]
+
+// Get royalty-tagged pages
+const royalty = wiki.getPagesByTag(&#39;royalty&#39;)
+console.log(royalty.map(p =&gt; p.title))
+// [&#39;King Aldric&#39;, &#39;Queen Isolde&#39;, &#39;Castle Valdor&#39;]
+
+// Combine in listPages for complex queries
+const royalPeople = wiki.listPages({
+  type: &#39;person&#39;,
+  tags: [&#39;royalty&#39;]
+})
+console.log(royalPeople.map(p =&gt; p.title))
+// [&#39;King Aldric&#39;, &#39;Queen Isolde&#39;]
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createWiki, type Wiki } from &#39;@motioneffector/wiki&#39;
+
+async function main() {
+  const wiki = createWiki()
+
+  // Create a categorized wiki
+  await wiki.createPage({
+    title: &#39;Gandalf&#39;,
+    type: &#39;character&#39;,
+    tags: [&#39;wizard&#39;, &#39;protagonist&#39;, &#39;fellowship&#39;],
+    content: &#39;A powerful wizard.&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Frodo&#39;,
+    type: &#39;character&#39;,
+    tags: [&#39;hobbit&#39;, &#39;protagonist&#39;, &#39;fellowship&#39;, &#39;ring-bearer&#39;],
+    content: &#39;The ring-bearer.&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Sauron&#39;,
+    type: &#39;character&#39;,
+    tags: [&#39;villain&#39;, &#39;maiar&#39;],
+    content: &#39;The Dark Lord.&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;The Shire&#39;,
+    type: &#39;location&#39;,
+    tags: [&#39;hobbit&#39;, &#39;safe&#39;],
+    content: &#39;Home of the hobbits.&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Mordor&#39;,
+    type: &#39;location&#39;,
+    tags: [&#39;dangerous&#39;, &#39;villain&#39;],
+    content: &#39;Land of shadow.&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;The One Ring&#39;,
+    type: &#39;artifact&#39;,
+    tags: [&#39;dangerous&#39;, &#39;villain&#39;, &#39;ring-bearer&#39;],
+    content: &#39;The ring of power.&#39;
+  })
+
+  // Build a sidebar navigation
+  console.log(buildTypeSidebar(wiki))
+
+  // Show tag relationships
+  console.log(&#39;\n--- Dangerous things ---&#39;)
+  for (const page of wiki.getPagesByTag(&#39;dangerous&#39;)) {
+    console.log(`  ${page.title} (${page.type})`)
+  }
+
+  console.log(&#39;\n--- Fellowship members ---&#39;)
+  const fellowship = wiki.listPages({
+    type: &#39;character&#39;,
+    tags: [&#39;fellowship&#39;]
+  })
+  for (const page of fellowship) {
+    console.log(`  ${page.title}`)
+  }
+}
+
+function buildTypeSidebar(wiki: Wiki): string {
+  const types = wiki.getTypes()
+  let sidebar = &#39;WIKI CONTENTS\n&#39;
+  sidebar += &#39;=&#39;.repeat(20) + &#39;\n\n&#39;
+
+  for (const type of types) {
+    const pages = wiki.getPagesByType(type)
+    sidebar += `${type.toUpperCase()} (${pages.length})\n`
+    for (const page of pages) {
+      sidebar += `  • ${page.title}\n`
+    }
+    sidebar += &#39;\n&#39;
+  }
+
+  return sidebar
+}
+
+main()
+</code></pre>
+<h2>Variations</h2>
+<h3>Type-Based Navigation Component</h3>
+<pre><code class="language-typescript">function getTypeNavigation(wiki: Wiki) {
+  const types = wiki.getTypes()
+
+  return types.map(type =&gt; {
+    const pages = wiki.getPagesByType(type)
+    return {
+      type,
+      label: type.charAt(0).toUpperCase() + type.slice(1) + &#39;s&#39;,
+      count: pages.length,
+      pages: pages.map(p =&gt; ({ id: p.id, title: p.title }))
+    }
+  })
+}
+
+// Usage in a React-like component
+const nav = getTypeNavigation(wiki)
+// [
+//   { type: &#39;character&#39;, label: &#39;Characters&#39;, count: 3, pages: [...] },
+//   { type: &#39;location&#39;, label: &#39;Locations&#39;, count: 2, pages: [...] },
+//   ...
+// ]
+</code></pre>
+<h3>Tag Cloud with Weights</h3>
+<pre><code class="language-typescript">function getWeightedTagCloud(wiki: Wiki) {
+  const tags = wiki.getTags()
+  const counts = tags.map(tag =&gt; ({
+    tag,
+    count: wiki.getPagesByTag(tag).length
+  }))
+
+  const maxCount = Math.max(...counts.map(c =&gt; c.count))
+
+  return counts.map(({ tag, count }) =&gt; ({
+    tag,
+    count,
+    weight: count / maxCount, // 0-1 scale for sizing
+    size: Math.ceil((count / maxCount) * 4) + 1 // 1-5 scale
+  }))
+}
+</code></pre>
+<h3>Updating Categories</h3>
+<pre><code class="language-typescript">// Change a page&#39;s type
+await wiki.updatePage(&#39;gandalf&#39;, { type: &#39;maiar&#39; })
+
+// Add a tag
+const page = wiki.getPage(&#39;gandalf&#39;)
+await wiki.updatePage(&#39;gandalf&#39;, {
+  tags: [...(page?.tags ?? []), &#39;grey-council&#39;]
+})
+
+// Remove a tag
+await wiki.updatePage(&#39;gandalf&#39;, {
+  tags: page?.tags?.filter(t =&gt; t !== &#39;fellowship&#39;)
+})
+
+// Clear type or tags
+await wiki.updatePage(&#39;gandalf&#39;, { type: undefined })
+await wiki.updatePage(&#39;gandalf&#39;, { tags: undefined })
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Type/Tag Not Appearing in getTypes()/getTags()</h3>
+<p><strong>Symptom:</strong> You set a type or tag but it doesn&#39;t show in the list.</p>
+<p><strong>Cause:</strong> <code>getTypes()</code> and <code>getTags()</code> only return values that are currently assigned to at least one page.</p>
+<p><strong>Solution:</strong> This is expected behavior. Once you assign the type/tag to a page, it will appear.</p>
+<h3>Tags Array Mutations Not Saving</h3>
+<p><strong>Symptom:</strong> You modified the tags array but changes don&#39;t persist.</p>
+<p><strong>Cause:</strong> You might be mutating the returned object instead of using <code>updatePage</code>.</p>
+<p><strong>Solution:</strong> Always use <code>updatePage</code> to modify pages:</p>
+<pre><code class="language-typescript">// Wrong
+const page = wiki.getPage(&#39;id&#39;)
+page.tags.push(&#39;new-tag&#39;) // This doesn&#39;t persist!
+
+// Right
+const page = wiki.getPage(&#39;id&#39;)
+await wiki.updatePage(&#39;id&#39;, {
+  tags: [...(page?.tags ?? []), &#39;new-tag&#39;]
+})
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="guide-searching-pages.html">Searching Pages</a></strong> - Finding pages by type and tag</li>
+<li><strong><a href="api-search-and-filter.html">Search &amp; Filter API</a></strong> - Full reference for type and tag methods</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storage - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Storage</h1>
+<p>The wiki keeps pages in memory for fast access but delegates persistence to a storage adapter. The default <code>memoryStorage()</code> stores everything in RAM (no persistence). You can plug in any backend by implementing the <code>WikiStorage</code> interface.</p>
+<h2>How It Works</h2>
+<pre><code>Your App → Wiki Instance → Memory (fast lookups, link indexes)
+                 ↓
+           Storage Adapter → Your Backend (persistence)
+</code></pre>
+<p>The wiki maintains in-memory data structures for:</p>
+<ul>
+<li>All pages (for instant lookups)</li>
+<li>Link index (for fast <code>getLinks()</code>)</li>
+<li>Backlink index (for fast <code>getBacklinks()</code>)</li>
+</ul>
+<p>The storage adapter handles persistence. Every <code>createPage</code>, <code>updatePage</code>, and <code>deletePage</code> call writes through to storage.</p>
+<h2>Basic Usage</h2>
+<pre><code class="language-typescript">import { createWiki, memoryStorage } from &#39;@motioneffector/wiki&#39;
+
+// Default: in-memory storage (data lost on process end)
+const wiki = createWiki()
+
+// Explicit: same as default
+const wiki = createWiki({ storage: memoryStorage() })
+</code></pre>
+<p>All wiki methods that modify data are async because storage operations might be async (database writes, file I/O, network calls).</p>
+<h2>Key Points</h2>
+<ul>
+<li><p><strong>Default storage is <code>memoryStorage()</code></strong> - Great for testing and prototyping, but data disappears when the process ends.</p>
+</li>
+<li><p><strong>Storage is async</strong> - All write operations (<code>createPage</code>, <code>updatePage</code>, <code>deletePage</code>, <code>import</code>) return Promises.</p>
+</li>
+<li><p><strong>Link indexes are always in-memory</strong> - Even with persistent storage, links and backlinks are indexed in RAM for speed. On startup, you&#39;d typically load all pages via <code>import()</code> to rebuild indexes.</p>
+</li>
+<li><p><strong>Storage doesn&#39;t need to understand links</strong> - It just stores and retrieves page objects. Link extraction and indexing happens in the wiki layer.</p>
+</li>
+</ul>
+<h2>Examples</h2>
+<h3>Custom Storage Adapter</h3>
+<p>The <code>WikiStorage</code> interface has four methods:</p>
+<pre><code class="language-typescript">interface WikiStorage {
+  save(page: WikiPage): Promise&lt;void&gt;
+  load(id: string): Promise&lt;WikiPage | null&gt;
+  delete(id: string): Promise&lt;void&gt;
+  list(): Promise&lt;WikiPage[]&gt;
+}
+</code></pre>
+<p>Here&#39;s a simple file-based implementation:</p>
+<pre><code class="language-typescript">import { createWiki, type WikiStorage, type WikiPage } from &#39;@motioneffector/wiki&#39;
+import { readFile, writeFile, unlink, readdir } from &#39;fs/promises&#39;
+import { join } from &#39;path&#39;
+
+function fileStorage(directory: string): WikiStorage {
+  return {
+    async save(page: WikiPage) {
+      const path = join(directory, `${page.id}.json`)
+      await writeFile(path, JSON.stringify(page))
+    },
+
+    async load(id: string) {
+      try {
+        const path = join(directory, `${id}.json`)
+        const data = await readFile(path, &#39;utf-8&#39;)
+        const page = JSON.parse(data)
+        // Restore Date objects
+        page.created = new Date(page.created)
+        page.modified = new Date(page.modified)
+        return page
+      } catch {
+        return null
+      }
+    },
+
+    async delete(id: string) {
+      const path = join(directory, `${id}.json`)
+      await unlink(path).catch(() =&gt; {})
+    },
+
+    async list() {
+      const files = await readdir(directory)
+      const pages: WikiPage[] = []
+      for (const file of files) {
+        if (file.endsWith(&#39;.json&#39;)) {
+          const id = file.slice(0, -5)
+          const page = await this.load(id)
+          if (page) pages.push(page)
+        }
+      }
+      return pages
+    }
+  }
+}
+
+// Usage
+const wiki = createWiki({ storage: fileStorage(&#39;./wiki-data&#39;) })
+</code></pre>
+<h3>Loading Existing Data</h3>
+<p>When using persistent storage, load all pages at startup to rebuild the in-memory indexes:</p>
+<pre><code class="language-typescript">async function initWiki(storage: WikiStorage) {
+  const wiki = createWiki({ storage })
+
+  // Load all existing pages to rebuild link indexes
+  const existingPages = await storage.list()
+  if (existingPages.length &gt; 0) {
+    await wiki.import(existingPages, { mode: &#39;replace&#39; })
+  }
+
+  return wiki
+}
+</code></pre>
+<h2>Related</h2>
+<ul>
+<li><strong><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></strong> - Step-by-step guide to building adapters</li>
+<li><strong><a href="api-storage.html">Storage API</a></strong> - Full interface reference</li>
+<li><strong><a href="guide-import-and-export.html">Import &amp; Export</a></strong> - Moving data between storage backends</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

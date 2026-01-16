@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Searching Pages - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Searching Pages</h1>
+<p>Find pages by searching text, filtering by type or tags, and paginating results. This guide covers all the ways to query your wiki.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li>Have a wiki with some pages (<a href="your-first-wiki.html">Your First Wiki</a>)</li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll search and filter pages using:</p>
+<ol>
+<li><code>search()</code> for text search across titles and content</li>
+<li><code>listPages()</code> for filtering by type, tags, with sorting and pagination</li>
+<li><code>getPagesByTag()</code> and <code>getPagesByType()</code> for exact matches</li>
+</ol>
+<h2>Step 1: Text Search</h2>
+<p>Use <code>search()</code> to find pages by matching text in titles and content.</p>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+await wiki.createPage({
+  title: &#39;Magic Sword&#39;,
+  content: &#39;A powerful enchanted blade.&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Fire Magic&#39;,
+  content: &#39;The art of controlling flames.&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Basic Training&#39;,
+  content: &#39;Learn to wield a sword effectively.&#39;
+})
+
+// Search for &quot;magic&quot;
+const results = wiki.search(&#39;magic&#39;)
+console.log(results.map(p =&gt; p.title))
+// [&#39;Magic Sword&#39;, &#39;Fire Magic&#39;]
+// Note: &quot;Basic Training&quot; matches &quot;sword&quot; not &quot;magic&quot;
+
+// Search for &quot;sword&quot;
+const swordResults = wiki.search(&#39;sword&#39;)
+console.log(swordResults.map(p =&gt; p.title))
+// [&#39;Magic Sword&#39;, &#39;Basic Training&#39;]
+</code></pre>
+<p>Search is case-insensitive and matches partial words.</p>
+<h2>Step 2: Filter by Type and Tags</h2>
+<p>Use <code>listPages()</code> to filter pages by their type or tags.</p>
+<pre><code class="language-typescript">await wiki.createPage({
+  title: &#39;Fireball&#39;,
+  type: &#39;spell&#39;,
+  tags: [&#39;fire&#39;, &#39;offensive&#39;]
+})
+
+await wiki.createPage({
+  title: &#39;Healing Light&#39;,
+  type: &#39;spell&#39;,
+  tags: [&#39;holy&#39;, &#39;defensive&#39;]
+})
+
+await wiki.createPage({
+  title: &#39;Dragon&#39;,
+  type: &#39;creature&#39;,
+  tags: [&#39;fire&#39;, &#39;boss&#39;]
+})
+
+// Get all spells
+const spells = wiki.listPages({ type: &#39;spell&#39; })
+console.log(spells.map(p =&gt; p.title))
+// [&#39;Fireball&#39;, &#39;Healing Light&#39;]
+
+// Get pages with &#39;fire&#39; tag
+const firePages = wiki.listPages({ tags: [&#39;fire&#39;] })
+console.log(firePages.map(p =&gt; p.title))
+// [&#39;Fireball&#39;, &#39;Dragon&#39;]
+
+// Combine: spells with offensive tag
+const offensiveSpells = wiki.listPages({ type: &#39;spell&#39;, tags: [&#39;offensive&#39;] })
+console.log(offensiveSpells.map(p =&gt; p.title))
+// [&#39;Fireball&#39;]
+</code></pre>
+<h2>Step 3: Sort and Paginate</h2>
+<p>Control the order and limit results.</p>
+<pre><code class="language-typescript">// Sort by title alphabetically
+const alphabetical = wiki.listPages({ sort: &#39;title&#39;, order: &#39;asc&#39; })
+
+// Sort by most recently modified
+const recent = wiki.listPages({ sort: &#39;modified&#39;, order: &#39;desc&#39; })
+
+// Pagination: get pages 11-20
+const page2 = wiki.listPages({ offset: 10, limit: 10 })
+
+// Combine everything
+const results = wiki.listPages({
+  type: &#39;spell&#39;,
+  sort: &#39;title&#39;,
+  order: &#39;asc&#39;,
+  limit: 10,
+  offset: 0
+})
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createWiki, type Wiki } from &#39;@motioneffector/wiki&#39;
+
+async function main() {
+  const wiki = createWiki()
+
+  // Create sample content
+  await wiki.createPage({
+    title: &#39;Fireball&#39;,
+    content: &#39;Hurls a ball of fire at enemies.&#39;,
+    type: &#39;spell&#39;,
+    tags: [&#39;fire&#39;, &#39;offensive&#39;, &#39;aoe&#39;]
+  })
+
+  await wiki.createPage({
+    title: &#39;Ice Lance&#39;,
+    content: &#39;Pierces a single target with ice.&#39;,
+    type: &#39;spell&#39;,
+    tags: [&#39;ice&#39;, &#39;offensive&#39;, &#39;single-target&#39;]
+  })
+
+  await wiki.createPage({
+    title: &#39;Healing Wave&#39;,
+    content: &#39;Restores health to allies.&#39;,
+    type: &#39;spell&#39;,
+    tags: [&#39;holy&#39;, &#39;defensive&#39;, &#39;healing&#39;]
+  })
+
+  await wiki.createPage({
+    title: &#39;Fire Elemental&#39;,
+    content: &#39;A creature made of living flame.&#39;,
+    type: &#39;creature&#39;,
+    tags: [&#39;fire&#39;, &#39;summoned&#39;]
+  })
+
+  // Search examples
+  console.log(&#39;--- Search &quot;fire&quot; ---&#39;)
+  const fireSearch = wiki.search(&#39;fire&#39;)
+  for (const page of fireSearch) {
+    console.log(`  ${page.title} (${page.type})`)
+  }
+
+  console.log(&#39;\n--- All spells ---&#39;)
+  const spells = wiki.listPages({ type: &#39;spell&#39;, sort: &#39;title&#39;, order: &#39;asc&#39; })
+  for (const spell of spells) {
+    console.log(`  ${spell.title}`)
+  }
+
+  console.log(&#39;\n--- Offensive spells ---&#39;)
+  const offensive = wiki.listPages({ type: &#39;spell&#39;, tags: [&#39;offensive&#39;] })
+  for (const spell of offensive) {
+    console.log(`  ${spell.title}: ${spell.tags?.join(&#39;, &#39;)}`)
+  }
+
+  console.log(&#39;\n--- All fire-related ---&#39;)
+  const fireTagged = wiki.getPagesByTag(&#39;fire&#39;)
+  for (const page of fireTagged) {
+    console.log(`  ${page.title} (${page.type})`)
+  }
+}
+
+main()
+</code></pre>
+<h2>Variations</h2>
+<h3>Search with Field Restrictions</h3>
+<pre><code class="language-typescript">// Search only titles
+const titleMatches = wiki.search(&#39;fire&#39;, { fields: [&#39;title&#39;] })
+
+// Search only content
+const contentMatches = wiki.search(&#39;fire&#39;, { fields: [&#39;content&#39;] })
+
+// Search tags
+const tagMatches = wiki.search(&#39;offensive&#39;, { fields: [&#39;tags&#39;] })
+
+// Combine with type filter
+const fireSpells = wiki.search(&#39;fire&#39;, { type: &#39;spell&#39; })
+
+// Limit results
+const top5 = wiki.search(&#39;fire&#39;, { limit: 5 })
+</code></pre>
+<h3>Building a Tag Cloud</h3>
+<pre><code class="language-typescript">function getTagCloud(wiki: Wiki) {
+  const allTags = wiki.getTags()
+
+  return allTags.map(tag =&gt; ({
+    tag,
+    count: wiki.getPagesByTag(tag).length
+  })).sort((a, b) =&gt; b.count - a.count)
+}
+
+const cloud = getTagCloud(wiki)
+for (const { tag, count } of cloud) {
+  console.log(`${tag}: ${count} pages`)
+}
+</code></pre>
+<h3>Type-Based Navigation</h3>
+<pre><code class="language-typescript">function getNavigationByType(wiki: Wiki) {
+  const types = wiki.getTypes()
+
+  return types.map(type =&gt; ({
+    type,
+    pages: wiki.getPagesByType(type).map(p =&gt; ({
+      title: p.title,
+      id: p.id
+    }))
+  }))
+}
+
+const nav = getNavigationByType(wiki)
+for (const { type, pages } of nav) {
+  console.log(`\n${type.toUpperCase()}`)
+  for (const page of pages) {
+    console.log(`  - ${page.title}`)
+  }
+}
+</code></pre>
+<h3>Paginated Listing</h3>
+<pre><code class="language-typescript">function paginatedList(wiki: Wiki, page: number, perPage: number) {
+  const offset = (page - 1) * perPage
+  const pages = wiki.listPages({
+    sort: &#39;modified&#39;,
+    order: &#39;desc&#39;,
+    limit: perPage,
+    offset
+  })
+
+  const total = wiki.listPages().length
+
+  return {
+    pages,
+    page,
+    perPage,
+    total,
+    totalPages: Math.ceil(total / perPage)
+  }
+}
+
+const result = paginatedList(wiki, 1, 10)
+console.log(`Page ${result.page} of ${result.totalPages}`)
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Search Returns No Results</h3>
+<p><strong>Symptom:</strong> <code>search()</code> returns empty array for a term you know exists.</p>
+<p><strong>Cause:</strong> Search matches against the actual text. Check for typos or that the term isn&#39;t inside a wikilink.</p>
+<p><strong>Solution:</strong> Verify the content contains the exact text:</p>
+<pre><code class="language-typescript">const page = wiki.getPageByTitle(&#39;Known Page&#39;)
+console.log(page?.content.includes(&#39;search term&#39;))
+</code></pre>
+<h3>Tags Filter Not Working</h3>
+<p><strong>Symptom:</strong> <code>listPages({ tags: [&#39;x&#39;] })</code> returns empty.</p>
+<p><strong>Cause:</strong> Tags are case-sensitive.</p>
+<p><strong>Solution:</strong> Ensure exact case match:</p>
+<pre><code class="language-typescript">const allTags = wiki.getTags()
+console.log(allTags) // Check actual tag values
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></strong> - Best practices for categorization</li>
+<li><strong><a href="api-search-and-filter.html">Search &amp; Filter API</a></strong> - Full reference</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

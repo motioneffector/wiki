@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Managing Dead Links - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Managing Dead Links</h1>
+<p>Dead links point to pages that don&#39;t exist yet. This guide shows how to find them, report on them, and fix them.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="concept-pages-and-links.html">Understand pages and links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Understand dead links and orphans</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll manage dead links by:</p>
+<ol>
+<li>Finding all dead links with <code>getDeadLinks()</code></li>
+<li>Checking specific pages with <code>getDeadLinksForPage()</code></li>
+<li>Fixing them by creating missing pages or updating content</li>
+</ol>
+<h2>Step 1: Find All Dead Links</h2>
+<p><code>getDeadLinks()</code> returns every broken link across your entire wiki.</p>
+<pre><code class="language-typescript">import { createWiki } from &#39;@motioneffector/wiki&#39;
+
+const wiki = createWiki()
+
+await wiki.createPage({
+  title: &#39;Story&#39;,
+  content: &#39;The [[Hero]] defeats the [[Dragon]] using the [[Magic Sword]].&#39;
+})
+
+await wiki.createPage({
+  title: &#39;Hero&#39;,
+  content: &#39;The brave protagonist.&#39;
+})
+
+// Dragon and Magic Sword don&#39;t exist
+const deadLinks = wiki.getDeadLinks()
+console.log(deadLinks)
+// [
+//   { source: &#39;story&#39;, target: &#39;Dragon&#39; },
+//   { source: &#39;story&#39;, target: &#39;Magic Sword&#39; }
+// ]
+</code></pre>
+<p>Each dead link tells you:</p>
+<ul>
+<li><code>source</code> - The page ID containing the broken link</li>
+<li><code>target</code> - The link text (what the user typed in <code>[[...]]</code>)</li>
+</ul>
+<h2>Step 2: Check a Specific Page</h2>
+<p>When editing a page, check just that page&#39;s dead links.</p>
+<pre><code class="language-typescript">const storyDeadLinks = wiki.getDeadLinksForPage(&#39;story&#39;)
+console.log(storyDeadLinks)
+// [&#39;Dragon&#39;, &#39;Magic Sword&#39;]
+
+// Show warning in editor
+if (storyDeadLinks.length &gt; 0) {
+  console.warn(`This page has ${storyDeadLinks.length} broken links`)
+}
+</code></pre>
+<h2>Step 3: Fix Dead Links</h2>
+<p>Two approaches: create the missing pages, or update the content.</p>
+<pre><code class="language-typescript">// Option 1: Create the missing page
+await wiki.createPage({
+  title: &#39;Dragon&#39;,
+  content: &#39;The fearsome beast.&#39;
+})
+
+// Check again - Dragon is no longer dead
+console.log(wiki.getDeadLinksForPage(&#39;story&#39;))
+// [&#39;Magic Sword&#39;]
+
+// Option 2: Update the content to remove the link
+const story = wiki.getPage(&#39;story&#39;)
+await wiki.updatePage(&#39;story&#39;, {
+  content: story.content.replace(&#39;[[Magic Sword]]&#39;, &#39;a magic sword&#39;)
+})
+
+// All fixed
+console.log(wiki.getDeadLinksForPage(&#39;story&#39;))
+// []
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createWiki, type Wiki, type DeadLink } from &#39;@motioneffector/wiki&#39;
+
+async function main() {
+  const wiki = createWiki()
+
+  // Build a wiki with some dead links
+  await wiki.createPage({
+    title: &#39;Index&#39;,
+    content: &#39;Welcome to [[World Guide]] and [[Character List]].&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;World Guide&#39;,
+    content: &#39;The world contains [[Kingdom of Valdor]] and [[Dark Forest]].&#39;
+  })
+
+  await wiki.createPage({
+    title: &#39;Character List&#39;,
+    content: &#39;Heroes: [[Sir Galahad]], [[Lady Elara]]. Villains: [[The Shadow King]].&#39;
+  })
+
+  // Generate a dead link report
+  console.log(generateDeadLinkReport(wiki))
+
+  // Auto-create stubs for missing pages
+  await createMissingPages(wiki)
+
+  // Verify all fixed
+  console.log(&#39;\nAfter fix:&#39;, wiki.getDeadLinks().length, &#39;dead links&#39;)
+}
+
+function generateDeadLinkReport(wiki: Wiki): string {
+  const deadLinks = wiki.getDeadLinks()
+
+  if (deadLinks.length === 0) {
+    return &#39;No dead links found!&#39;
+  }
+
+  // Group by source page
+  const grouped = new Map&lt;string, string[]&gt;()
+  for (const { source, target } of deadLinks) {
+    if (!grouped.has(source)) {
+      grouped.set(source, [])
+    }
+    grouped.get(source)!.push(target)
+  }
+
+  // Format report
+  let report = `Dead Link Report (${deadLinks.length} total)\n`
+  report += &#39;=&#39;.repeat(40) + &#39;\n\n&#39;
+
+  for (const [sourceId, targets] of grouped) {
+    const sourcePage = wiki.getPage(sourceId)
+    report += `${sourcePage?.title ?? sourceId}:\n`
+    for (const target of targets) {
+      report += `  → [[${target}]] (missing)\n`
+    }
+    report += &#39;\n&#39;
+  }
+
+  return report
+}
+
+async function createMissingPages(wiki: Wiki): Promise&lt;string[]&gt; {
+  const deadLinks = wiki.getDeadLinks()
+  const missingTitles = [...new Set(deadLinks.map(dl =&gt; dl.target))]
+  const created: string[] = []
+
+  for (const title of missingTitles) {
+    await wiki.createPage({
+      title,
+      content: `TODO: Add content for &quot;${title}&quot;`
+    })
+    created.push(title)
+    console.log(`Created stub: ${title}`)
+  }
+
+  return created
+}
+
+main()
+</code></pre>
+<h2>Variations</h2>
+<h3>Interactive Dead Link Fixer</h3>
+<pre><code class="language-typescript">async function interactiveDeadLinkFixer(wiki: Wiki) {
+  const deadLinks = wiki.getDeadLinks()
+
+  for (const { source, target } of deadLinks) {
+    const sourcePage = wiki.getPage(source)
+    console.log(`\nIn &quot;${sourcePage?.title}&quot;: [[${target}]] is broken`)
+    console.log(&#39;Options:&#39;)
+    console.log(&#39;  1. Create page&#39;)
+    console.log(&#39;  2. Remove link&#39;)
+    console.log(&#39;  3. Skip&#39;)
+
+    const choice = await prompt(&#39;Choice: &#39;)
+
+    switch (choice) {
+      case &#39;1&#39;:
+        await wiki.createPage({ title: target, content: &#39;TODO&#39; })
+        console.log(`Created: ${target}`)
+        break
+      case &#39;2&#39;:
+        const content = sourcePage!.content.replace(
+          new RegExp(`\\[\\[${escapeRegex(target)}\\]\\]`, &#39;g&#39;),
+          target
+        )
+        await wiki.updatePage(source, { content })
+        console.log(&#39;Link removed&#39;)
+        break
+      default:
+        console.log(&#39;Skipped&#39;)
+    }
+  }
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, &#39;\\%%CONTENT%%amp;&#39;)
+}
+</code></pre>
+<h3>Dead Link Monitoring</h3>
+<pre><code class="language-typescript">function monitorDeadLinks(wiki: Wiki) {
+  let lastCount = wiki.getDeadLinks().length
+
+  wiki.onChange(() =&gt; {
+    const currentCount = wiki.getDeadLinks().length
+
+    if (currentCount &gt; lastCount) {
+      console.warn(`Dead links increased: ${lastCount} → ${currentCount}`)
+    } else if (currentCount &lt; lastCount) {
+      console.log(`Dead links decreased: ${lastCount} → ${currentCount}`)
+    }
+
+    lastCount = currentCount
+  })
+}
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Same Dead Link Appearing Multiple Times</h3>
+<p><strong>Symptom:</strong> <code>getDeadLinks()</code> shows the same target from different source pages.</p>
+<p><strong>Cause:</strong> Multiple pages link to the same non-existent page.</p>
+<p><strong>Solution:</strong> This is expected. Creating the missing page fixes all of them at once:</p>
+<pre><code class="language-typescript">// Get unique missing pages
+const missing = [...new Set(wiki.getDeadLinks().map(dl =&gt; dl.target))]
+</code></pre>
+<h3>Link Doesn&#39;t Register as Dead</h3>
+<p><strong>Symptom:</strong> A page links to something that doesn&#39;t exist, but it&#39;s not in dead links.</p>
+<p><strong>Cause:</strong> The link might be inside a code block, which is ignored.</p>
+<p><strong>Solution:</strong> Check if the link is inside ``` or ` characters. Links in code are intentionally skipped.</p>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></strong> - Conceptual explanation</li>
+<li><strong><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></strong> - Finding orphans and analyzing structure</li>
+<li><strong><a href="api-graph.html">Graph API</a></strong> - Full reference for dead link methods</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

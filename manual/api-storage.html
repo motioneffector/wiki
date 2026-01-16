@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storage API - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Storage API</h1>
+<p>Storage adapter interface and built-in implementations.</p>
+<hr>
+<h2><code>memoryStorage()</code></h2>
+<p>Creates an in-memory storage adapter (no persistence).</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function memoryStorage(): WikiStorage
+</code></pre>
+<p><strong>Returns:</strong> <code>WikiStorage</code> — An adapter that stores pages in memory</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createWiki, memoryStorage } from &#39;@motioneffector/wiki&#39;
+
+// Explicit usage
+const storage = memoryStorage()
+const wiki = createWiki({ storage })
+
+// This is the default, so equivalent to:
+const wiki = createWiki()
+</code></pre>
+<p>Data stored in memory is lost when the process ends or the storage instance is garbage collected.</p>
+<hr>
+<h2><code>WikiStorage</code> Interface</h2>
+<p>Interface that custom storage adapters must implement.</p>
+<pre><code class="language-typescript">interface WikiStorage {
+  save(page: WikiPage): Promise&lt;void&gt;
+  load(id: string): Promise&lt;WikiPage | null&gt;
+  delete(id: string): Promise&lt;void&gt;
+  list(): Promise&lt;WikiPage[]&gt;
+}
+</code></pre>
+<h3><code>save()</code></h3>
+<p>Stores or updates a page.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">save(page: WikiPage): Promise&lt;void&gt;
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>page</code></td>
+<td><code>WikiPage</code></td>
+<td>The page to store</td>
+</tr>
+</tbody></table>
+<p>Called by <code>createPage()</code>, <code>updatePage()</code>, <code>renamePage()</code>, and <code>import()</code>.</p>
+<h3><code>load()</code></h3>
+<p>Retrieves a page by ID.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">load(id: string): Promise&lt;WikiPage | null&gt;
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>The page ID to load</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> The page if found, <code>null</code> otherwise.</p>
+<h3><code>delete()</code></h3>
+<p>Removes a page.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">delete(id: string): Promise&lt;void&gt;
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>The page ID to delete</td>
+</tr>
+</tbody></table>
+<p>Should not throw if the page doesn&#39;t exist.</p>
+<h3><code>list()</code></h3>
+<p>Returns all stored pages.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">list(): Promise&lt;WikiPage[]&gt;
+</code></pre>
+<p><strong>Returns:</strong> Array of all pages in storage.</p>
+<p>Used by the wiki on startup (via <code>import()</code>) to rebuild link indexes.</p>
+<hr>
+<h2>Implementing Custom Storage</h2>
+<h3>Basic Structure</h3>
+<pre><code class="language-typescript">import { type WikiStorage, type WikiPage } from &#39;@motioneffector/wiki&#39;
+
+function myStorage(): WikiStorage {
+  return {
+    async save(page: WikiPage) {
+      // Store the page
+    },
+
+    async load(id: string) {
+      // Return page or null
+      return null
+    },
+
+    async delete(id: string) {
+      // Remove page (no-op if missing)
+    },
+
+    async list() {
+      // Return all pages
+      return []
+    }
+  }
+}
+</code></pre>
+<h3>Handling Dates</h3>
+<p>When serializing to JSON (files, databases, APIs), Date objects become strings. Convert them back when loading:</p>
+<pre><code class="language-typescript">async load(id: string) {
+  const data = await fetchFromStorage(id)
+  if (!data) return null
+
+  return {
+    ...data,
+    created: new Date(data.created),
+    modified: new Date(data.modified)
+  }
+}
+
+async list() {
+  const allData = await fetchAllFromStorage()
+
+  return allData.map(data =&gt; ({
+    ...data,
+    created: new Date(data.created),
+    modified: new Date(data.modified)
+  }))
+}
+</code></pre>
+<h3>Loading on Startup</h3>
+<p>The wiki doesn&#39;t automatically load from storage on creation. Load existing pages manually:</p>
+<pre><code class="language-typescript">async function initWiki(storage: WikiStorage) {
+  const wiki = createWiki({ storage })
+
+  // Load existing pages to rebuild link indexes
+  const existing = await storage.list()
+  if (existing.length &gt; 0) {
+    await wiki.import(existing, { mode: &#39;replace&#39; })
+  }
+
+  return wiki
+}
+</code></pre>
+<hr>
+<h2>Example Implementations</h2>
+<h3>localStorage (Browser)</h3>
+<pre><code class="language-typescript">function localStorageAdapter(prefix = &#39;wiki&#39;): WikiStorage {
+  const key = (id: string) =&gt; `${prefix}:page:${id}`
+  const indexKey = `${prefix}:index`
+
+  return {
+    async save(page) {
+      localStorage.setItem(key(page.id), JSON.stringify(page))
+
+      const index = JSON.parse(localStorage.getItem(indexKey) || &#39;[]&#39;)
+      if (!index.includes(page.id)) {
+        index.push(page.id)
+        localStorage.setItem(indexKey, JSON.stringify(index))
+      }
+    },
+
+    async load(id) {
+      const data = localStorage.getItem(key(id))
+      if (!data) return null
+
+      const page = JSON.parse(data)
+      page.created = new Date(page.created)
+      page.modified = new Date(page.modified)
+      return page
+    },
+
+    async delete(id) {
+      localStorage.removeItem(key(id))
+
+      const index = JSON.parse(localStorage.getItem(indexKey) || &#39;[]&#39;)
+      const updated = index.filter((i: string) =&gt; i !== id)
+      localStorage.setItem(indexKey, JSON.stringify(updated))
+    },
+
+    async list() {
+      const index = JSON.parse(localStorage.getItem(indexKey) || &#39;[]&#39;)
+      const pages: WikiPage[] = []
+
+      for (const id of index) {
+        const page = await this.load(id)
+        if (page) pages.push(page)
+      }
+
+      return pages
+    }
+  }
+}
+</code></pre>
+<h3>File System (Node.js)</h3>
+<p>See <a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a> for a complete file-based implementation.</p>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

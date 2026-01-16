@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Types Reference - @motioneffector/wiki</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/wiki</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/wiki" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/wiki" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/wiki</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-wiki.html">Your First Wiki</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-pages-and-links.html">Pages &amp; Links</a></li>
+<li><a href="concept-bidirectional-links.html">Bidirectional Links</a></li>
+<li><a href="concept-dead-links-and-orphans.html">Dead Links &amp; Orphans</a></li>
+<li><a href="concept-storage.html">Storage</a></li>
+<li><a href="concept-events.html">Events</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-working-with-backlinks.html">Working with Backlinks</a></li>
+<li><a href="guide-managing-dead-links.html">Managing Dead Links</a></li>
+<li><a href="guide-searching-pages.html">Searching Pages</a></li>
+<li><a href="guide-organizing-with-types-and-tags.html">Organizing with Types and Tags</a></li>
+<li><a href="guide-import-and-export.html">Import &amp; Export</a></li>
+<li><a href="guide-custom-storage-adapters.html">Custom Storage Adapters</a></li>
+<li><a href="guide-exploring-the-link-graph.html">Exploring the Link Graph</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-core.html">Core API</a></li>
+<li><a href="api-links.html">Links API</a></li>
+<li><a href="api-graph.html">Graph API</a></li>
+<li><a href="api-search-and-filter.html">Search &amp; Filter API</a></li>
+<li><a href="api-import-export.html">Import/Export API</a></li>
+<li><a href="api-events.html">Events API</a></li>
+<li><a href="api-storage.html">Storage API</a></li>
+<li><a href="api-types.html">Types Reference</a></li>
+<li><a href="api-errors.html">Errors Reference</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Types Reference</h1>
+<p>TypeScript type definitions for the wiki library.</p>
+<hr>
+<h2><code>Wiki</code></h2>
+<p>The main wiki interface returned by <code>createWiki()</code>.</p>
+<pre><code class="language-typescript">interface Wiki {
+  // Page operations
+  createPage(data: CreatePageData): Promise&lt;WikiPage&gt;
+  getPage(id: string): WikiPage | undefined
+  getPageByTitle(title: string, options?: GetPageByTitleOptions): WikiPage | undefined
+  updatePage(id: string, data: UpdatePageData): Promise&lt;WikiPage&gt;
+  deletePage(id: string, options?: DeletePageOptions): Promise&lt;void&gt;
+  renamePage(id: string, newTitle: string, options?: RenamePageOptions): Promise&lt;WikiPage&gt;
+
+  // Links
+  getLinks(id: string): string[]
+  getBacklinks(id: string): string[]
+  getLinkedPages(id: string): WikiPage[]
+  getBacklinkPages(id: string): WikiPage[]
+  resolveLink(linkText: string): string
+  resolveLinkToPage(linkText: string): WikiPage | undefined
+
+  // Graph
+  getDeadLinks(): DeadLink[]
+  getDeadLinksForPage(id: string): string[]
+  getOrphans(): WikiPage[]
+  getGraph(): Graph
+  getConnectedPages(id: string, depth?: number): WikiPage[]
+
+  // Search and filter
+  listPages(options?: ListPagesOptions): WikiPage[]
+  search(query: string, options?: SearchOptions): WikiPage[]
+  getTags(): string[]
+  getPagesByTag(tag: string): WikiPage[]
+  getTypes(): string[]
+  getPagesByType(type: string): WikiPage[]
+
+  // Import/Export
+  export(): WikiPage[]
+  import(pages: WikiPage[], options?: ImportOptions): Promise&lt;number&gt;
+  toJSON(): string
+
+  // Events
+  on(event: string, callback: WikiEventCallback): UnsubscribeFunction
+  onChange(callback: WikiEventCallback): UnsubscribeFunction
+}
+</code></pre>
+<hr>
+<h2><code>WikiPage</code></h2>
+<p>A page in the wiki.</p>
+<pre><code class="language-typescript">interface WikiPage {
+  id: string
+  title: string
+  content: string
+  type?: string
+  tags?: string[]
+  created: Date
+  modified: Date
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>Unique identifier (slugified from title or custom)</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td><code>string</code></td>
+<td>Display title</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td><code>string</code></td>
+<td>Page content (may contain <code>[[wikilinks]]</code>)</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>string?</code></td>
+<td>Optional category type</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>string[]?</code></td>
+<td>Optional tags array</td>
+</tr>
+<tr>
+<td><code>created</code></td>
+<td><code>Date</code></td>
+<td>Creation timestamp</td>
+</tr>
+<tr>
+<td><code>modified</code></td>
+<td><code>Date</code></td>
+<td>Last modification timestamp</td>
+</tr>
+</tbody></table>
+<hr>
+<h2><code>WikiOptions</code></h2>
+<p>Options for <code>createWiki()</code>.</p>
+<pre><code class="language-typescript">interface WikiOptions {
+  storage?: WikiStorage
+  linkPattern?: RegExp
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>storage</code></td>
+<td><code>WikiStorage?</code></td>
+<td>Custom storage adapter. Default: <code>memoryStorage()</code></td>
+</tr>
+<tr>
+<td><code>linkPattern</code></td>
+<td><code>RegExp?</code></td>
+<td>Custom link regex. Default: `/[[([^]</td>
+</tr>
+</tbody></table>
+<hr>
+<h2><code>CreatePageData</code></h2>
+<p>Data for creating a page.</p>
+<pre><code class="language-typescript">interface CreatePageData {
+  id?: string
+  title: string
+  content?: string
+  type?: string
+  tags?: string[]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>Custom ID. Default: slugified title</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Page title</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>Page content. Default: <code>&#39;&#39;</code></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>Page type</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>string[]</code></td>
+<td>No</td>
+<td>Page tags</td>
+</tr>
+</tbody></table>
+<hr>
+<h2><code>UpdatePageData</code></h2>
+<p>Data for updating a page.</p>
+<pre><code class="language-typescript">interface UpdatePageData {
+  title?: string
+  content?: string
+  type?: string | undefined
+  tags?: string[] | undefined
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>title</code></td>
+<td><code>string?</code></td>
+<td>New title</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td><code>string?</code></td>
+<td>New content</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>string | undefined</code></td>
+<td>New type, or <code>undefined</code> to remove</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>string[] | undefined</code></td>
+<td>New tags, or <code>undefined</code> to remove</td>
+</tr>
+</tbody></table>
+<hr>
+<h2><code>ListPagesOptions</code></h2>
+<p>Options for <code>listPages()</code>.</p>
+<pre><code class="language-typescript">interface ListPagesOptions {
+  type?: string
+  tags?: string[]
+  sort?: &#39;title&#39; | &#39;created&#39; | &#39;modified&#39;
+  order?: &#39;asc&#39; | &#39;desc&#39;
+  limit?: number
+  offset?: number
+}
+</code></pre>
+<hr>
+<h2><code>SearchOptions</code></h2>
+<p>Options for <code>search()</code>.</p>
+<pre><code class="language-typescript">interface SearchOptions {
+  fields?: (&#39;title&#39; | &#39;content&#39; | &#39;tags&#39;)[]
+  type?: string
+  limit?: number
+}
+</code></pre>
+<hr>
+<h2><code>ImportOptions</code></h2>
+<p>Options for <code>import()</code>.</p>
+<pre><code class="language-typescript">interface ImportOptions {
+  mode?: &#39;replace&#39; | &#39;merge&#39; | &#39;skip&#39;
+  emitEvents?: boolean
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mode</code></td>
+<td><code>string</code></td>
+<td><code>&#39;replace&#39;</code></td>
+<td>Import strategy</td>
+</tr>
+<tr>
+<td><code>emitEvents</code></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td>Fire events during import</td>
+</tr>
+</tbody></table>
+<hr>
+<h2><code>GetPageByTitleOptions</code></h2>
+<p>Options for <code>getPageByTitle()</code>.</p>
+<pre><code class="language-typescript">interface GetPageByTitleOptions {
+  ignoreCase?: boolean
+}
+</code></pre>
+<hr>
+<h2><code>RenamePageOptions</code></h2>
+<p>Options for <code>renamePage()</code>.</p>
+<pre><code class="language-typescript">interface RenamePageOptions {
+  updateId?: boolean
+}
+</code></pre>
+<hr>
+<h2><code>DeletePageOptions</code></h2>
+<p>Options for <code>deletePage()</code>.</p>
+<pre><code class="language-typescript">interface DeletePageOptions {
+  updateLinks?: boolean
+}
+</code></pre>
+<hr>
+<h2><code>DeadLink</code></h2>
+<p>A link pointing to a non-existent page.</p>
+<pre><code class="language-typescript">interface DeadLink {
+  source: string
+  target: string
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>source</code></td>
+<td><code>string</code></td>
+<td>Page ID containing the dead link</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>string</code></td>
+<td>The link text (not slugified)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2><code>Graph</code></h2>
+<p>Adjacency list representation of page links.</p>
+<pre><code class="language-typescript">type Graph = Record&lt;string, string[]&gt;
+</code></pre>
+<p>Keys are page IDs, values are arrays of linked page IDs (slugified from link text).</p>
+<hr>
+<h2><code>WikiEvent</code></h2>
+<p>Union type for all change events.</p>
+<pre><code class="language-typescript">type WikiEvent =
+  | { type: &#39;create&#39;; page: WikiPage }
+  | { type: &#39;update&#39;; page: WikiPage; previous: WikiPage }
+  | { type: &#39;delete&#39;; page: WikiPage }
+  | { type: &#39;rename&#39;; page: WikiPage; previousTitle: string }
+</code></pre>
+<hr>
+<h2><code>WikiEventCallback</code></h2>
+<p>Event handler function type.</p>
+<pre><code class="language-typescript">type WikiEventCallback = (event: WikiEvent) =&gt; void
+</code></pre>
+<hr>
+<h2><code>UnsubscribeFunction</code></h2>
+<p>Function to remove an event subscription.</p>
+<pre><code class="language-typescript">type UnsubscribeFunction = () =&gt; void
+</code></pre>
+<hr>
+<h2><code>WikiStorage</code></h2>
+<p>Interface for storage adapters.</p>
+<pre><code class="language-typescript">interface WikiStorage {
+  save(page: WikiPage): Promise&lt;void&gt;
+  load(id: string): Promise&lt;WikiPage | null&gt;
+  delete(id: string): Promise&lt;void&gt;
+  list(): Promise&lt;WikiPage[]&gt;
+}
+</code></pre>
+<p>See <a href="api-storage.html">Storage API</a> for implementation details.</p>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
